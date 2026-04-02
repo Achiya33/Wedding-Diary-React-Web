@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  height: 100%;
+}
+
+::selection {
+  background: rgba(200, 169, 106, 0.35);
+}
+
+a {
+  text-decoration-thickness: from-font;
+  text-underline-offset: 3px;
+}
+
+.container-page {
+  @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+}
+
+.card {
+  @apply rounded-2xl bg-white shadow-soft ring-1 ring-black/5;
+}
+
+.soft-divider {
+  @apply border-t border-black/10;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition;
+}
+
+.btn-primary {
+  @apply bg-ink text-sand hover:bg-slate;
+}
+
+.btn-outline {
+  @apply border border-ink/20 bg-transparent hover:bg-black/5;
+}
+
+.pill {
+  @apply rounded-full border border-black/10 bg-white px-4 py-2 text-sm transition hover:bg-black/5;
+}
+
+.pill-active {
+  @apply border-gold/60 bg-parchment;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 1s ease-out forwards;
+}
+
+@keyframes fadeUpSoft {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up-soft {
+  opacity: 0;
+  animation: fadeUpSoft 1s ease-out forwards;
+}
+
+.animate-fade-up-soft-delay {
+  opacity: 0;
+  animation: fadeUpSoft 1.2s ease-out 0.2s forwards;
+}
+@keyframes featureCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-feature-card {
+  opacity: 0;
+  animation: featureCardIn 0.9s ease-out forwards;
+}
+
+/* Scroll-triggered animations */
+@keyframes scrollFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scrollFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scrollScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scroll-animate {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: none;
+}
+
+.scroll-animate.is-visible {
+  animation: scrollFadeUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.scroll-animate-delay-1.is-visible {
+  animation-delay: 0.15s;
+}
+
+.scroll-animate-delay-2.is-visible {
+  animation-delay: 0.3s;
+}
+
+.scroll-animate-delay-3.is-visible {
+  animation-delay: 0.45s;
+}
+
+.scroll-icon {
+  opacity: 0;
+  transform: scale(0.85);
+  transition: none;
+}
+
+.scroll-icon.is-visible {
+  animation: scrollScaleUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.scroll-icon.is-visible.scroll-animate-delay-1 {
+  animation-delay: 0.15s;
+}
+
+.scroll-icon.is-visible.scroll-animate-delay-2 {
+  animation-delay: 0.3s;
+}
+
+.scroll-icon.is-visible.scroll-animate-delay-3 {
+  animation-delay: 0.45s;
+}
+
+.scroll-fade {
+  opacity: 0;
+  transition: none;
+}
+
+.scroll-fade.is-visible {
+  animation: scrollFadeIn 0.9s ease-out forwards;
+}
