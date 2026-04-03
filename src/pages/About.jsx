@@ -100,11 +100,5 @@ useEffect(() => {
     </div>
   </div>
 </section>
-    
-
-        <div className="lg:justify-self-end">
-
-</div>
-    
   </> )
 }

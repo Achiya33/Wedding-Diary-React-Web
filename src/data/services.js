@@ -13,7 +13,7 @@ export const services = [
     description:
       'Your engagement is a wonderful time in both of your lives, and a photo shoot is a great way to commemorate that.',
     icon: 'rings',
-    image: '/images/service/engagement.webp',
+    image: '/images/service/WDC06750.webp',
   },
   {
     number: '03',

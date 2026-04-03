@@ -19,7 +19,7 @@ function AlbumCard({ item, index }) {
     <Link
       ref={ref}
       to={`/portfolio/${item.slug}`}
-      className={`group relative block h-[300px] overflow-hidden sm:h-[340px] lg:h-[380px] scroll-animate scroll-animate-delay-${(index % 3) + 1} ${visClass}`}
+      className={`group relative block h-[420px] overflow-hidden sm:h-[470px] lg:h-[520px] scroll-animate scroll-animate-delay-${(index % 3) + 1} ${visClass}`}
     >
       <img
         src={item.coverImage || item.cover}

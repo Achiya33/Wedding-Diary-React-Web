@@ -9,6 +9,7 @@ import PortfolioDetails from './pages/PortfolioDetails.jsx'
 import Packages from './pages/Packages.jsx'
 import Contact from './pages/Contact.jsx'
 import NotFound from './pages/NotFound.jsx'
+import Blog from './pages/Blog.jsx'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -34,6 +35,8 @@ function AppShell() {
           <Route path="/portfolio/:slug" element={<PortfolioDetails />} />
           <Route path="/packages" element={<Packages />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<Blog />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
