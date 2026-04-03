@@ -1,9 +1,11 @@
+import { asset } from '../utils/assetPath.js'
+
 export const blogPosts = [
   {
     slug: 'how-to-find-the-best-wedding-hair-makeup-artist',
     title: 'How to Find the Best Wedding Hair & Makeup Artist',
     date: 'December 25, 2024',
-    image: '/images/blog/PSI01784.webp',
+    image: asset('/images/blog/PSI01784.webp'),
     excerpt:
       'Your wedding day is one of the most special moments of your life, and you deserve to look and feel stunning. The right hair and makeup artist can make all the difference, helping you bring your dream look to life and giving you the confidence to shine.',
     content: `Your wedding day is one of the most special moments of your life, and you deserve to look and feel stunning. The right hair and makeup artist can make all the difference, helping you bring your dream look to life and giving you the confidence to shine. But with so many options out there, finding the perfect artist can feel overwhelming.
@@ -29,7 +31,7 @@ Remember, the right hair and makeup artist will not only make you look beautiful
     title:
       'Planning Your Couple Shoot in Colombo? From Low Budget to High Budget Locations.',
     date: 'December 25, 2024',
-    image: '/images/blog/WDM06361.webp',
+    image: asset('/images/blog/WDM06361.webp'),
     excerpt:
       "Your couple shoot is more than just taking photos. It's about celebrating your love and capturing your unique bond. Colombo with its mix of beautiful spots and stunning views, is a great place for this special moment.",
     content: `Your couple shoot is more than just taking photos. It's about celebrating your love and capturing your unique bond. Colombo, with its mix of beautiful spots and stunning views, is a great place for this special moment. Whether you prefer a quiet park or a fancy hotel, there's something here to suit every couple and every budget.
@@ -60,7 +62,7 @@ Tips for Your Couple Shoot:
     title:
       'Future Bride 2025 – This is for You! Must Read Before Planning Your Wedding.',
     date: 'December 25, 2024',
-    image: '/images/blog/DSC05309 (2).webp',
+    image: asset('/images/blog/DSC05309 (2).webp'),
     excerpt:
       "Congratulations! If you're reading this, you're likely getting ready for one of the most exciting times of your life planning your dream wedding in 2025.",
     content: `Congratulations! If you're reading this, you're likely getting ready for one of the most exciting times of your life – planning your dream wedding in 2025. Weddings keep changing with new trends every year, and 2025 is set to bring fresh ideas to make your big day truly special. But let's be honest, planning a wedding can be both exciting and overwhelming.

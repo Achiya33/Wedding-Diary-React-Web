@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { portfolioItems } from '../data/portfolio.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
+import { asset } from '../utils/assetPath.js'
 
 const categories = [
   { value: 'all', label: 'ALL' },
@@ -53,7 +54,7 @@ export default function Portfolio() {
       {/* Hero Section */}
       <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
       <img
-        src="/images/pak/44.webp"
+        src={asset("/images/pak/44.webp")}
         alt="About Us"
         className="absolute inset-0 h-full w-full object-cover"
       />

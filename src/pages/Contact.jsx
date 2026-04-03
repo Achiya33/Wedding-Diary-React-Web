@@ -5,6 +5,7 @@ import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
 import { site } from '../data/site.js'
+import { asset } from '../utils/assetPath.js'
 
 export default function Contact() {
   const [form, setForm] = React.useState({ name: '', email: '', message: '' })
@@ -37,7 +38,7 @@ export default function Contact() {
  <>
     <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
       <img
-        src="/images/pak/WDC09210.webp"
+        src={asset("/images/pak/WDC09210.webp")}
         alt="Contact Us"
         className="absolute inset-0 h-full w-full object-cover"
       />

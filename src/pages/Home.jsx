@@ -11,12 +11,13 @@ import { testimonials } from '../data/testimonials.js'
 import { blogPosts } from '../data/blogs.js'
 import { Wine, Gem, Flower2 } from 'lucide-react'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
+import { asset } from '../utils/assetPath.js'
 
 
 const heroSlides = [
-  '/images/home/WDM02710.webp',
-  '/images/home/WDM04908.webp',
-  '/images/home/_RO_3416.webp',
+  asset('/images/home/WDM02710.webp'),
+  asset('/images/home/WDM04908.webp'),
+  asset('/images/home/_RO_3416.webp'),
 ]
 
 function ServiceIcon({ icon }) {

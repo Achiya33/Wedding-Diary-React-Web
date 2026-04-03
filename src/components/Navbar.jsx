@@ -2,6 +2,7 @@ import React from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { site } from '../data/site.js'
+import { asset } from '../utils/assetPath.js'
 
 const nav = [
   { to: '/', label: 'Home' },
@@ -14,7 +15,7 @@ const nav = [
 function Brand({ light }) {
   return (
     <img
-      src={light ? "/logo.png" : "/logob.png"}
+      src={light ? asset("/logo.png") : asset("/logob.png")}
       alt="Logo"
       className="h-10 w-auto object-contain transition-all duration-300"
     />

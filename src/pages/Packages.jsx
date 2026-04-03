@@ -6,6 +6,7 @@ import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
 import { site } from '../data/site.js'
 import { motion } from 'framer-motion'
+import { asset } from '../utils/assetPath.js'
 
 export default function Packages() {
   const [form, setForm] = React.useState({
@@ -49,7 +50,7 @@ export default function Packages() {
      <>
     <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
       <img
-        src="/images/pak/WDC02930.webp"
+        src={asset("/images/pak/WDC02930.webp")}
         alt="Packages"
         className="absolute inset-0 h-full w-full object-cover"
       />

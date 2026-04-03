@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { asset } from '../utils/assetPath.js'
 
 
 export default function About() {
@@ -27,7 +28,7 @@ useEffect(() => {
     <>
     <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
       <img
-        src="/images/pak/44.webp"
+        src={asset("/images/pak/44.webp")}
         alt="About Us"
         className="absolute inset-0 h-full w-full object-cover"
       />
@@ -50,7 +51,7 @@ useEffect(() => {
       <div className="relative mx-auto h-[620px] w-full max-w-[540px] animate-fade-up-soft">
         <div className="group absolute left-0 top-0 z-20 w-[62%] overflow-hidden bg-white p-3 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)]">
           <img
-            src="/images/about/55.jpg"
+            src={asset("/images/about/55.jpg")}
             alt="Couple seated together"
             className="h-[230px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -58,7 +59,7 @@ useEffect(() => {
 
         <div className="group absolute left-[44%] top-[170px] z-30 w-[44%] overflow-hidden bg-white p-3 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)]">
           <img
-            src="/images/about/4545.jpg"
+            src={asset("/images/about/4545.jpg")}
             alt="Wedding portrait"
             className="h-[280px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -66,7 +67,7 @@ useEffect(() => {
 
         <div className="group absolute left-[6%] top-[355px] z-10 w-[42%] overflow-hidden bg-white p-3 shadow-[0_20px_45px_rgba(0,0,0,0.06)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)]">
           <img
-            src="/images/about/555.jpg"
+            src={asset("/images/about/555.jpg")}
             alt="Indoor framed portrait"
             className="h-[170px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
