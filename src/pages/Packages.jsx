@@ -4,11 +4,12 @@ import SectionHeading from '../components/SectionHeading.jsx'
 import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
-import { site } from '../data/site.js'
+import { getContent } from '../utils/contentStore.js'
 import { motion } from 'framer-motion'
 import { asset } from '../utils/assetPath.js'
 
 export default function Packages() {
+  const site = getContent('site')
   const [form, setForm] = React.useState({
     groomName: '',
     brideName: '',

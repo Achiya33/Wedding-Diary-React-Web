@@ -10,6 +10,7 @@ import Packages from './pages/Packages.jsx'
 import Contact from './pages/Contact.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Blog from './pages/Blog.jsx'
+import AdminPanel from './pages/AdminPanel.jsx'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -21,7 +22,16 @@ function ScrollToTop() {
 
 function AppShell() {
   const location = useLocation()
-  const isHome = location.pathname === '/'
+  const isAdmin = location.pathname.startsWith('/wd-x9panel')
+
+  // Admin panel has its own layout — no Navbar/Footer
+  if (isAdmin) {
+    return (
+      <Routes>
+        <Route path="/wd-x9panel" element={<AdminPanel />} />
+      </Routes>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-sand text-ink">

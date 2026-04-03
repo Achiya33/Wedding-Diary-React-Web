@@ -1,9 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react'
-import { site } from '../data/site.js'
+import { getContent } from '../utils/contentStore.js'
 
 export default function Footer() {
+  const site = getContent('site')
   return (
     <footer className="mt-16 border-t border-black/10 bg-parchment">
       <div className="container-page py-14">

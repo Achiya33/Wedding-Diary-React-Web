@@ -4,10 +4,11 @@ import SectionHeading from '../components/SectionHeading.jsx'
 import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
-import { site } from '../data/site.js'
+import { getContent } from '../utils/contentStore.js'
 import { asset } from '../utils/assetPath.js'
 
 export default function Contact() {
+  const site = getContent('site')
   const [form, setForm] = React.useState({ name: '', email: '', message: '' })
   const [status, setStatus] = React.useState({ state: 'idle', message: '' })
 

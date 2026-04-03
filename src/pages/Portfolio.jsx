@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { portfolioItems } from '../data/portfolio.js'
+import { getContent } from '../utils/contentStore.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 import { asset } from '../utils/assetPath.js'
 
@@ -43,6 +43,7 @@ function AlbumCard({ item, index }) {
 
 export default function Portfolio() {
   const [activeCategory, setActiveCategory] = React.useState('all')
+  const portfolioItems = getContent('portfolio')
 
   const filtered =
     activeCategory === 'all'

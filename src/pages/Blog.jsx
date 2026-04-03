@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Calendar, ArrowRight } from 'lucide-react'
-import { blogPosts } from '../data/blogs.js'
+import { getContent } from '../utils/contentStore.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 
 /* ── Blog listing page ── */
@@ -16,6 +16,7 @@ function BlogCard({ post, index, visClass }) {
         <img
           src={post.image}
           alt={post.title}
+          loading="lazy"
           className="h-full w-full object-cover transition duration-[800ms] ease-out group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/0 transition duration-500 group-hover:bg-black/15" />
@@ -74,7 +75,7 @@ function BlogListPage() {
       <section ref={gridRef} className="bg-[#f7f7f5] py-16 sm:py-20">
         <div className="mx-auto max-w-[1100px] px-6">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-            {blogPosts.map((post, i) => (
+            {getContent('blogs').map((post, i) => (
               <BlogCard key={post.slug} post={post} index={i} visClass={gridClass} />
             ))}
           </div>
@@ -153,7 +154,7 @@ export default function Blog() {
   const { slug } = useParams()
 
   if (slug) {
-    const post = blogPosts.find((p) => p.slug === slug)
+    const post = getContent('blogs').find((p) => p.slug === slug)
     if (!post) {
       return (
         <div className="flex min-h-screen items-center justify-center pt-24">

@@ -4,21 +4,12 @@ import { ArrowRight } from 'lucide-react'
 import SectionHeading from '../components/SectionHeading.jsx'
 import GalleryCard from '../components/GalleryCard.jsx'
 import TestimonialCarousel from '../components/TestimonialCarousel.jsx'
-import { site } from '../data/site.js'
-import { services } from '../data/services.js'
-import { portfolioItems } from '../data/portfolio.js'
-import { testimonials } from '../data/testimonials.js'
-import { blogPosts } from '../data/blogs.js'
+import { getContent } from '../utils/contentStore.js'
 import { Wine, Gem, Flower2 } from 'lucide-react'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 import { asset } from '../utils/assetPath.js'
 
 
-const heroSlides = [
-  asset('/images/home/WDM02710.webp'),
-  asset('/images/home/WDM04908.webp'),
-  asset('/images/home/_RO_3416.webp'),
-]
 
 function ServiceIcon({ icon }) {
   const common = "h-10 w-10 text-white"
@@ -110,16 +101,17 @@ function FeaturedAlbumsSection({ items }) {
         </div>
 
         {/* Album grid */}
-        <div className="mt-14 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
+        <div className="mt-14 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
           {items.slice(0, 4).map((item, index) => (
             <Link
               key={item.slug + index}
               to={`/portfolio/${item.slug}`}
-              className={`group relative block h-[280px] overflow-hidden sm:h-[320px] md:h-[360px] scroll-animate scroll-animate-delay-${Math.min(index + 1, 3)} ${visClass}`}
+              className={`group relative block h-[220px] overflow-hidden sm:h-[320px] md:h-[360px] scroll-animate scroll-animate-delay-${Math.min(index + 1, 3)} ${visClass}`}
             >
               <img
                 src={item.coverImage || item.cover}
                 alt={item.title}
+                loading="lazy"
                 className="h-full w-full object-cover transition duration-[1200ms] ease-out group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent transition duration-500 group-hover:from-black/70" />
@@ -171,6 +163,7 @@ function LatestBlogSection({ posts }) {
                 <img
                   src={post.image}
                   alt={post.title}
+                  loading="lazy"
                   className="h-full w-full object-cover transition duration-[800ms] ease-out group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-black/0 transition duration-500 group-hover:bg-black/20" />
@@ -207,6 +200,13 @@ function LatestBlogSection({ posts }) {
 }
 
 export default function Home() {
+  const site = getContent('site')
+  const services = getContent('services')
+  const portfolioItems = getContent('portfolio')
+  const testimonials = getContent('testimonials')
+  const blogPosts = getContent('blogs')
+  const heroSlides = getContent('heroSlides')
+
   const latest = portfolioItems.slice(0, 6)
   const [activeSlide, setActiveSlide] = React.useState(0)
   const [activeService, setActiveService] = React.useState(0)
@@ -290,47 +290,51 @@ export default function Home() {
       <ServicesSection services={services} />
 
 
+      {/* Interactive Services Section — mobile responsive */}
+      <div className="mt-10 grid min-h-[500px] overflow-hidden lg:min-h-[720px] lg:grid-cols-[320px_minmax(0,1fr)]">
+        {/* Service image (shown first on mobile for visual impact) */}
+        <div className="relative min-h-[300px] order-first lg:order-last sm:min-h-[400px] lg:min-h-[520px]">
+          <img
+            src={services[activeService]?.image}
+            alt={services[activeService]?.title}
+            loading="lazy"
+            className="h-full w-full object-cover object-right transition-opacity duration-500"
+          />
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
 
-
-
-      <div className="mt-10 grid min-h-[720px] overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="flex items-center bg-transparent px-6 py-10 lg:px-10">
-          <div className="w-full space-y-8">
+        {/* Service buttons */}
+        <div className="flex items-center bg-transparent px-6 py-8 lg:py-10 lg:px-10 order-last lg:order-first">
+          <div className="w-full flex gap-6 overflow-x-auto pb-2 lg:pb-0 lg:flex-col lg:gap-0 lg:space-y-8">
             {services.map((service, index) => (
               <button
                 key={service.title}
                 type="button"
+                onClick={() => setActiveService(index)}
                 onMouseEnter={() => setActiveService(index)}
                 onFocus={() => setActiveService(index)}
-                className="block text-left"
+                className="block text-left shrink-0 lg:shrink"
               >
-                <div className="text-[12px] tracking-[0.35em] text-black/40">
+                <div className="text-[11px] tracking-[0.35em] text-black/40 sm:text-[12px]">
                   {service.number}
                 </div>
 
                 <div
-                  className={`mt-2 font-serif text-4xl tracking-[0.18em] transition ${activeService === index ? 'text-black' : 'text-black/40'
-                    }`}
+                  className={`mt-1.5 font-serif text-2xl tracking-[0.12em] transition sm:text-3xl lg:text-4xl lg:tracking-[0.18em] lg:mt-2 ${
+                    activeService === index ? 'text-black' : 'text-black/40'
+                  }`}
                 >
                   {service.title}
                 </div>
 
                 <div
-                  className={`mt-3 h-px w-52 transition ${activeService === index ? 'bg-black/60' : 'bg-transparent'
-                    }`}
+                  className={`mt-2 h-px w-32 transition sm:w-44 lg:w-52 lg:mt-3 ${
+                    activeService === index ? 'bg-black/60' : 'bg-transparent'
+                  }`}
                 />
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="relative min-h-[520px]">
-          <img
-            src={services[activeService].image}
-            alt={services[activeService].title}
-            className="h-full w-full object-cover object-right"
-          />
-          <div className="absolute inset-0 bg-black/10" />
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { portfolioItems } from '../data/portfolio.js'
+import { getContent } from '../utils/contentStore.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 
 function AlbumPhoto({ src, alt, index, onClick }) {
@@ -28,6 +28,7 @@ function AlbumPhoto({ src, alt, index, onClick }) {
 
 export default function PortfolioDetails() {
   const { slug } = useParams()
+  const portfolioItems = getContent('portfolio')
   const item = portfolioItems.find((p) => p.slug === slug)
   const [activeIndex, setActiveIndex] = React.useState(null)
 

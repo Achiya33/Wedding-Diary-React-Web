@@ -48,28 +48,31 @@ useEffect(() => {
 >
     <div className="grid items-center gap-16 lg:grid-cols-[1fr_1.05fr]">
       
-      <div className="relative mx-auto h-[620px] w-full max-w-[540px] animate-fade-up-soft">
-        <div className="group absolute left-0 top-0 z-20 w-[62%] overflow-hidden bg-white p-3 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)]">
+      <div className="relative mx-auto h-[420px] w-full max-w-[540px] animate-fade-up-soft sm:h-[520px] lg:h-[620px]">
+        <div className="group absolute left-0 top-0 z-20 w-[62%] overflow-hidden bg-white p-2 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)] sm:p-3">
           <img
             src={asset("/images/about/55.jpg")}
             alt="Couple seated together"
-            className="h-[230px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            className="h-[160px] w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-[230px]"
           />
         </div>
 
-        <div className="group absolute left-[44%] top-[170px] z-30 w-[44%] overflow-hidden bg-white p-3 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)]">
+        <div className="group absolute left-[44%] top-[120px] z-30 w-[44%] overflow-hidden bg-white p-2 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)] sm:top-[170px] sm:p-3">
           <img
             src={asset("/images/about/4545.jpg")}
             alt="Wedding portrait"
-            className="h-[280px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            className="h-[190px] w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-[280px]"
           />
         </div>
 
-        <div className="group absolute left-[6%] top-[355px] z-10 w-[42%] overflow-hidden bg-white p-3 shadow-[0_20px_45px_rgba(0,0,0,0.06)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)]">
+        <div className="group absolute left-[6%] top-[260px] z-10 w-[42%] overflow-hidden bg-white p-2 shadow-[0_20px_45px_rgba(0,0,0,0.06)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)] sm:top-[355px] sm:p-3">
           <img
             src={asset("/images/about/555.jpg")}
             alt="Indoor framed portrait"
-            className="h-[170px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            className="h-[120px] w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-[170px]"
           />
         </div>
       </div>
