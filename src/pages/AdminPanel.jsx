@@ -28,7 +28,7 @@ import HostingGuide from '../admin/HostingGuide.jsx'
 import AdminManager from '../admin/AdminManager.jsx'
 import FormSubmissions from '../admin/FormSubmissions.jsx'
 import CloudBackup from '../admin/CloudBackup.jsx'
-import { getUnreadCount } from '../utils/submit.js'
+import { getCachedSubmissions } from '../utils/submissionDB.js'
 
 const SECTIONS = [
   { key: 'hero', label: 'Hero Slides', icon: Image },
@@ -79,10 +79,14 @@ export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Refresh unread count periodically and on section changes
+  // Refresh unread count periodically from cloud cache
   useEffect(() => {
-    setUnreadCount(getUnreadCount())
-    const interval = setInterval(() => setUnreadCount(getUnreadCount()), 5000)
+    const refreshCount = () => {
+      const subs = getCachedSubmissions()
+      setUnreadCount(subs.filter((s) => !s.read).length)
+    }
+    refreshCount()
+    const interval = setInterval(refreshCount, 5000)
     return () => clearInterval(interval)
   }, [activeSection])
   const navigate = useNavigate()

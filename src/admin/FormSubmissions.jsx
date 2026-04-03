@@ -585,9 +585,10 @@ export default function FormSubmissions() {
       <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
         <p className="text-xs leading-relaxed text-gray-500">
           <strong className="text-gray-400">How it works:</strong> Every submission from the Contact
-          and Packages forms is saved to your cloud database (Google Sheets) and also triggers an
-          email notification via Formspree. Configure your database endpoint above to sync submissions
-          across all devices. Without a cloud endpoint, submissions fall back to browser-local storage.
+          and Packages forms is saved to your Google Sheets database via Apps Script and also triggers an
+          email notification via Formspree. Configure your database endpoint above to view, manage,
+          and delete submissions from any device. Use the delete buttons to remove individual entries
+          or clear all submissions at once.
         </p>
       </div>
     </div>

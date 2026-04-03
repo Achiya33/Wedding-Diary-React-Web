@@ -4,7 +4,7 @@
  */
 
 import { exportAllContent } from './contentStore.js'
-import { getSubmissions } from './submit.js'
+import { getCachedSubmissions } from './submissionDB.js'
 
 const SETTINGS_KEY = 'wd_backup_settings'
 const HISTORY_KEY = 'wd_backup_history'
@@ -80,7 +80,7 @@ export async function performBackup() {
 
   // Collect all data
   const content = exportAllContent()
-  const submissions = getSubmissions()
+  const submissions = getCachedSubmissions()
   const payload = {
     content,
     submissions,
