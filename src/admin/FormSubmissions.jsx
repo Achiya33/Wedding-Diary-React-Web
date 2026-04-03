@@ -17,14 +17,28 @@ import {
   Share2,
   AlertCircle,
   Inbox,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  Database,
+  Settings2,
+  Copy,
+  Check,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react'
 import {
-  getSubmissions,
-  markSubmissionRead,
-  markAllSubmissionsRead,
-  deleteSubmission,
-  deleteAllSubmissions,
-} from '../utils/submit.js'
+  fetchFromCloud,
+  markReadInCloud,
+  markAllReadInCloud,
+  deleteFromCloud,
+  deleteAllFromCloud,
+  getSubmissionEndpoint,
+  setSubmissionEndpoint,
+  testSubmissionEndpoint,
+  getCachedSubmissions,
+  SUBMISSIONS_SCRIPT_CODE,
+} from '../utils/submissionDB.js'
 
 /* ── Field display config ─────────────────────────────────────── */
 const FIELD_ICONS = {
@@ -51,7 +65,13 @@ const FIELD_LABELS = {
 }
 
 function formatLabel(key) {
-  return FIELD_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')
+  return (
+    FIELD_LABELS[key] ||
+    key.charAt(0).toUpperCase() +
+      key
+        .slice(1)
+        .replace(/([A-Z])/g, ' $1')
+  )
 }
 
 function formatDate(iso) {
@@ -74,11 +94,157 @@ function timeSince(iso) {
   return formatDate(iso)
 }
 
+/* ── Database Setup Panel ────────────────────────────────────── */
+function DatabaseSetup({ onEndpointChange }) {
+  const [endpoint, setEndpoint] = useState(getSubmissionEndpoint())
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+  const [showScript, setShowScript] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [expanded, setExpanded] = useState(!endpoint)
+
+  const handleSave = () => {
+    setSubmissionEndpoint(endpoint)
+    setTestResult(null)
+    onEndpointChange?.()
+  }
+
+  const handleTest = async () => {
+    setTesting(true)
+    setTestResult(null)
+    const result = await testSubmissionEndpoint(endpoint)
+    setTestResult(result)
+    setTesting(false)
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(SUBMISSIONS_SCRIPT_CODE)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea')
+      ta.value = SUBMISSIONS_SCRIPT_CODE
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-800 bg-gray-900/60 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center gap-3 px-5 py-4 text-left"
+      >
+        <Database className="h-5 w-5 text-[#7296a2]" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-white">Cloud Database</p>
+          <p className="text-[11px] text-gray-500">
+            {endpoint ? 'Google Sheets endpoint configured' : 'Not configured — submissions saved locally only'}
+          </p>
+        </div>
+        <Settings2 className={`h-4 w-4 text-gray-500 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+      </button>
+
+      {expanded && (
+        <div className="border-t border-gray-800 px-5 pb-5 pt-4 space-y-4">
+          {/* Endpoint input */}
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-2">
+              Google Apps Script Web App URL
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={endpoint}
+                onChange={(e) => setEndpoint(e.target.value)}
+                placeholder="https://script.google.com/macros/s/…/exec"
+                className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#7296a2] focus:outline-none"
+              />
+              <button
+                onClick={handleSave}
+                className="rounded-lg bg-[#7296a2] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#5a7d88]"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+          {/* Test & status */}
+          {endpoint && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleTest}
+                disabled={testing}
+                className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 transition hover:text-white disabled:opacity-50"
+              >
+                {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                Test Connection
+              </button>
+              {testResult && (
+                <span className={`text-xs ${testResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {testResult.success ? '✓ Connected!' : `✕ ${testResult.error}`}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Setup guide */}
+          <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+            <p className="text-xs leading-relaxed text-gray-500">
+              <strong className="text-gray-400">Setup:</strong> Create a new Google Apps Script project,
+              paste the script code below, and deploy as a Web App (Execute as: "Me", Access: "Anyone").
+              The script uses a Google Sheet as a database to store all form submissions.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => setShowScript(!showScript)}
+                className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 transition hover:text-white"
+              >
+                {showScript ? 'Hide' : 'Show'} Script Code
+              </button>
+              <a
+                href="https://script.google.com/home"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 transition hover:text-white"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Open Apps Script
+              </a>
+            </div>
+          </div>
+
+          {/* Script code */}
+          {showScript && (
+            <div className="relative">
+              <button
+                onClick={handleCopy}
+                className="absolute right-3 top-3 flex items-center gap-1.5 rounded-lg bg-gray-700 px-3 py-1.5 text-xs text-gray-300 transition hover:bg-gray-600"
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+              <pre className="max-h-[300px] overflow-auto rounded-xl bg-gray-950 p-4 text-[11px] leading-relaxed text-gray-400 border border-gray-800">
+                {SUBMISSIONS_SCRIPT_CODE}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Submission Card ──────────────────────────────────────────── */
 function SubmissionCard({ submission, onMarkRead, onDelete }) {
   const [expanded, setExpanded] = useState(false)
   const isPackage = submission.page === 'Packages'
-  const isContact = submission.page === 'Contact'
 
   const handleExpand = () => {
     setExpanded(!expanded)
@@ -217,43 +383,58 @@ function SubmissionCard({ submission, onMarkRead, onDelete }) {
 /* ── Main Component ───────────────────────────────────────────── */
 export default function FormSubmissions() {
   const [submissions, setSubmissions] = useState([])
-  const [filter, setFilter] = useState('all') // all | packages | contact | unread
+  const [filter, setFilter] = useState('all')
   const [confirmClear, setConfirmClear] = useState(false)
+  const [cloudStatus, setCloudStatus] = useState('loading') // loading | connected | offline
+  const [syncing, setSyncing] = useState(false)
 
-  const refresh = useCallback(() => {
-    setSubmissions(getSubmissions())
+  const loadSubmissions = useCallback(async () => {
+    setSyncing(true)
+    try {
+      const { submissions: data, fromCloud } = await fetchFromCloud()
+      setSubmissions(data)
+      setCloudStatus(fromCloud ? 'connected' : 'offline')
+    } catch {
+      setSubmissions(getCachedSubmissions())
+      setCloudStatus('offline')
+    } finally {
+      setSyncing(false)
+    }
   }, [])
 
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    loadSubmissions()
+  }, [loadSubmissions])
 
-  const handleMarkRead = (id) => {
-    markSubmissionRead(id)
-    refresh()
+  const handleMarkRead = async (id) => {
+    // Optimistic update
+    setSubmissions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, read: true } : s))
+    )
+    await markReadInCloud(id)
   }
 
-  const handleMarkAllRead = () => {
-    markAllSubmissionsRead()
-    refresh()
+  const handleMarkAllRead = async () => {
+    setSubmissions((prev) => prev.map((s) => ({ ...s, read: true })))
+    await markAllReadInCloud()
   }
 
-  const handleDelete = (id) => {
-    deleteSubmission(id)
-    refresh()
+  const handleDelete = async (id) => {
+    setSubmissions((prev) => prev.filter((s) => s.id !== id))
+    await deleteFromCloud(id)
   }
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = async () => {
     if (!confirmClear) {
       setConfirmClear(true)
       return
     }
-    deleteAllSubmissions()
+    setSubmissions([])
     setConfirmClear(false)
-    refresh()
+    await deleteAllFromCloud()
   }
 
-  // Filter submissions
+  // Filter
   const filtered = submissions.filter((s) => {
     if (filter === 'packages') return s.page === 'Packages'
     if (filter === 'contact') return s.page === 'Contact'
@@ -267,6 +448,39 @@ export default function FormSubmissions() {
 
   return (
     <div className="space-y-6">
+      {/* Database Setup */}
+      <DatabaseSetup onEndpointChange={loadSubmissions} />
+
+      {/* Connection status bar */}
+      <div className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3">
+        <div className="flex items-center gap-2">
+          {cloudStatus === 'connected' ? (
+            <>
+              <Cloud className="h-4 w-4 text-emerald-400" />
+              <span className="text-xs text-emerald-400">Cloud synced</span>
+            </>
+          ) : cloudStatus === 'loading' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+              <span className="text-xs text-gray-500">Connecting…</span>
+            </>
+          ) : (
+            <>
+              <CloudOff className="h-4 w-4 text-amber-400" />
+              <span className="text-xs text-amber-400">Offline — showing cached data</span>
+            </>
+          )}
+        </div>
+        <button
+          onClick={loadSubmissions}
+          disabled={syncing}
+          className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 transition hover:text-white disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
+          Sync
+        </button>
+      </div>
+
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
@@ -371,9 +585,9 @@ export default function FormSubmissions() {
       <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
         <p className="text-xs leading-relaxed text-gray-500">
           <strong className="text-gray-400">How it works:</strong> Every submission from the Contact
-          and Packages forms is saved locally in your browser alongside the usual email notification
-          via Formspree. Submissions persist in localStorage until you delete them. They are
-          browser-specific — only visible on the device/browser where the form was submitted from.
+          and Packages forms is saved to your cloud database (Google Sheets) and also triggers an
+          email notification via Formspree. Configure your database endpoint above to sync submissions
+          across all devices. Without a cloud endpoint, submissions fall back to browser-local storage.
         </p>
       </div>
     </div>

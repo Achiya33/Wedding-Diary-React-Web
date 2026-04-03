@@ -225,8 +225,10 @@ export default function Home() {
         {heroSlides.map((image, index) => (
           <img
             key={image}
-            src={image}
+            src={asset(image)}
             alt={`Wedding hero background ${index + 1}`}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            fetchPriority={index === 0 ? 'high' : 'auto'}
             className={[
               'absolute inset-0 h-full w-full object-cover transition-opacity duration-[1600ms] ease-in-out',
               activeSlide === index ? 'opacity-100' : 'opacity-0',
@@ -295,7 +297,7 @@ export default function Home() {
         {/* Service image (shown first on mobile for visual impact) */}
         <div className="relative min-h-[300px] order-first lg:order-last sm:min-h-[400px] lg:min-h-[520px]">
           <img
-            src={services[activeService]?.image}
+            src={asset(services[activeService]?.image)}
             alt={services[activeService]?.title}
             loading="lazy"
             className="h-full w-full object-cover object-right transition-opacity duration-500"
