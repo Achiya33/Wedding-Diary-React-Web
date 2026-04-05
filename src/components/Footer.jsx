@@ -12,7 +12,8 @@ export default function Footer() {
           <div>
             <h3 className="font-serif text-xl">About</h3>
             <p className="mt-3 text-sm text-ink/80 leading-relaxed">
-              {site.tagline}. Replace this text with a short brand intro (2–3 lines).
+             “Capturing love in its purest form, we turn fleeting moments into timeless memories.
+With an artistic eye and heartfelt storytelling, every frame reflects your unique journey together.”
             </p>
             <div className="mt-5 flex items-center gap-3">
               <a
