@@ -78,7 +78,7 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
           <div>
             <h3 className="font-serif text-xl">Write Us</h3>
             <p className="mt-3 text-sm text-ink/80 leading-relaxed">
-              Tell us about your date, location, and what you’re planning — we’ll reply with availability and next steps.
+            Tell us your date, location, and what you’re planning — we’ll get back to you with availability and next steps.
             </p>
             <Link to="/contact" className="mt-4 inline-flex btn btn-primary">
               Contact Us
