@@ -21,14 +21,14 @@ import { getStorage } from 'firebase/storage'
 // ─── Firebase Config ──────────────────────────────────────────
 // TODO: Replace with your Firebase project credentials
 const firebaseConfig = {
-  apiKey: "AIzaSyCnP-0yeYSKkOXBT4zSumhI2U-PfeQT7Pk",
-  authDomain: "wedding-diary-web.firebaseapp.com",
-  databaseURL: "https://wedding-diary-web-default-rtdb.asia-southeast1.firebasedatabase.app/", 
-  projectId: "wedding-diary-web",
-  storageBucket: "wedding-diary-web.firebasestorage.app",
-  messagingSenderId: "872690104602",
-  appId: "1:872690104602:web:de83150ee9765fc29754a3",
-  measurementId: "G-MMMT4Y7S6P"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // ─── Initialize Firebase ──────────────────────────────────────
