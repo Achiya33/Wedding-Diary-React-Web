@@ -56,18 +56,18 @@ export default function Portfolio() {
     <div>
       {/* Hero Section */}
       <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
-      <img
-        src={asset("/images/pak/44.webp")}
-        alt="About Us"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black/30" />
-      <div className="relative z-10 flex h-full items-center justify-center">
-        <h1 className="text-5xl font-semibold text-white sm:text-6xl lg:text-7xl animate-fade-up">
-          Portfolio
-        </h1>
-      </div>
-    </section>
+        <img
+          src={asset("/images/pak/DSC05262 (3).webp")}
+          alt="About Us"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="relative z-10 flex h-full items-center justify-center">
+          <h1 className="text-5xl font-semibold text-white sm:text-6xl lg:text-7xl animate-fade-up">
+            Portfolio
+          </h1>
+        </div>
+      </section>
 
       {/* Category Tabs */}
       <section className="border-b border-black/10 bg-white">
@@ -78,11 +78,10 @@ export default function Portfolio() {
                 key={cat.value}
                 type="button"
                 onClick={() => setActiveCategory(cat.value)}
-                className={`text-[13px] tracking-[0.14em] transition duration-300 ${
-                  activeCategory === cat.value
-                    ? 'text-[#7296a2] font-medium border-b-2 border-[#7296a2] pb-1'
-                    : 'text-[#999] hover:text-[#666] pb-1 border-b-2 border-transparent'
-                }`}
+                className={`text-[13px] tracking-[0.14em] transition duration-300 ${activeCategory === cat.value
+                  ? 'text-[#7296a2] font-medium border-b-2 border-[#7296a2] pb-1'
+                  : 'text-[#999] hover:text-[#666] pb-1 border-b-2 border-transparent'
+                  }`}
               >
                 {cat.label}
               </button>
