@@ -8,6 +8,7 @@ export const site = {
   socials: {
     instagram: 'https://www.instagram.com/w_diarylk/?hl=en',
     facebook: 'https://web.facebook.com/weddingdiarysl/?_rdc=1&_rdr#',
+    whatsapp: 'https://wa.me/94776555586',
   },
 
   formspreeEndpoint: 'https://formspree.io/f/mgonpveb',

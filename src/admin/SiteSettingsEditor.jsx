@@ -162,6 +162,16 @@ export default function SiteSettingsEditor() {
               className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp URL</label>
+            <input
+              type="url"
+              value={settings.socials?.whatsapp || ''}
+              onChange={(e) => updateSocial('whatsapp', e.target.value)}
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
+              placeholder="wa.me/94776555586"
+            />
+          </div>
         </div>
       </div>
     </div>

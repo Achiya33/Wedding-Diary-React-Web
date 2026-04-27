@@ -37,6 +37,30 @@ const DEFAULTS = {
   site: defaultSite,
 }
 
+// ─── Deep Merge Helper ────────────────────────────────────────
+
+/**
+ * Deep-merge defaults with overrides. 
+ * Ensures new default fields are available even if Firebase data is older.
+ * Override values take priority; defaults fill in missing fields.
+ */
+function deepMerge(defaults, overrides) {
+  if (!defaults || typeof defaults !== 'object' || Array.isArray(defaults)) return overrides
+  if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) return overrides
+
+  const result = { ...defaults }
+  for (const key of Object.keys(overrides)) {
+    if (
+      overrides[key] && typeof overrides[key] === 'object' && !Array.isArray(overrides[key]) &&
+      defaults[key] && typeof defaults[key] === 'object' && !Array.isArray(defaults[key])
+    ) {
+      result[key] = deepMerge(defaults[key], overrides[key])
+    } else {
+      result[key] = overrides[key]
+    }
+  }
+  return result
+}
 // ─── Local Cache ──────────────────────────────────────────────
 
 function getCached(key) {
@@ -102,8 +126,11 @@ export function subscribeToContent(key, callback) {
 
   return dbSubscribe(`${DB_PATH}/${key}`, (data) => {
     if (data !== null) {
-      setCache(key, data) // Update local cache
-      callback(data)
+      // Deep-merge with defaults so new fields (e.g. socials.whatsapp) are available
+      // even if Firebase hasn't been updated with them yet
+      const merged = deepMerge(DEFAULTS[key], data)
+      setCache(key, merged) // Update local cache
+      callback(merged)
     } else {
       // No data in Firebase yet — use defaults
       callback(DEFAULTS[key] ?? null)

@@ -290,6 +290,7 @@ export function sanitizeSiteSettings(settings) {
     socials: settings.socials ? {
       instagram: sanitizeUrl(settings.socials.instagram || ''),
       facebook: sanitizeUrl(settings.socials.facebook || ''),
+      whatsapp: sanitizeUrl(settings.socials.whatsapp || ''),
     } : {},
   }
 }

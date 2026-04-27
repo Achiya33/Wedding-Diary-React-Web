@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react'
+import WhatsAppIcon from './WhatsAppIcon.jsx'
 import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 
 export default function Footer() {
@@ -33,6 +34,15 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
                 aria-label="Facebook"
               >
                 <Facebook size={16} />
+              </a>
+              <a
+                className="btn btn-outline px-3 py-2"
+                href={site.socials.whatsapp}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="WhatsApp"
+              >
+                <WhatsAppIcon size={16} />
               </a>
             </div>
           </div>
