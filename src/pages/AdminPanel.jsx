@@ -15,8 +15,11 @@ import {
   X,
   Inbox,
   Cloud,
+  Database,
 } from 'lucide-react'
-import AdminLogin, { isAdminAuthenticated, logoutAdmin } from './AdminLogin.jsx'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from '../utils/firebase.js'
+import AdminLogin, { logoutAdmin } from './AdminLogin.jsx'
 import HeroEditor from '../admin/HeroEditor.jsx'
 import PortfolioEditor from '../admin/PortfolioEditor.jsx'
 import BlogEditor from '../admin/BlogEditor.jsx'
@@ -28,7 +31,9 @@ import HostingGuide from '../admin/HostingGuide.jsx'
 import AdminManager from '../admin/AdminManager.jsx'
 import FormSubmissions from '../admin/FormSubmissions.jsx'
 import CloudBackup from '../admin/CloudBackup.jsx'
+import FirebaseSetup from '../admin/FirebaseSetup.jsx'
 import { getCachedSubmissions } from '../utils/submissionDB.js'
+import { seedDefaults } from '../utils/contentStore.js'
 
 const SECTIONS = [
   { key: 'hero', label: 'Hero Slides', icon: Image },
@@ -42,6 +47,7 @@ const SECTIONS = [
   { key: 'backup', label: 'Cloud Backup', icon: Cloud },
   { key: 'hosting', label: 'Hosting Guide', icon: Globe },
   { key: 'admins', label: 'Admin Users', icon: Shield },
+  { key: 'firebase', label: 'Firebase Setup', icon: Database },
 ]
 
 function SectionContent({ section }) {
@@ -68,16 +74,32 @@ function SectionContent({ section }) {
       return <HostingGuide />
     case 'admins':
       return <AdminManager />
+    case 'firebase':
+      return <FirebaseSetup />
     default:
       return <HeroEditor />
   }
 }
 
 export default function AdminPanel() {
-  const [authenticated, setAuthenticated] = useState(isAdminAuthenticated())
+  const [authenticated, setAuthenticated] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
   const [activeSection, setActiveSection] = useState('hero')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+
+  // Listen for Firebase Auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthenticated(!!user)
+      setAuthChecked(true)
+      // Auto-seed defaults on first admin login
+      if (user) {
+        seedDefaults().catch(() => {})
+      }
+    })
+    return () => unsubscribe()
+  }, [])
 
   // Refresh unread count periodically from cloud cache
   useEffect(() => {
@@ -91,12 +113,24 @@ export default function AdminPanel() {
   }, [activeSection])
   const navigate = useNavigate()
 
+  // Show loading while checking auth state
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-950">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-[3px] border-gray-700 border-t-[#7296a2]" />
+          <p className="mt-4 text-sm tracking-widest text-gray-500">CHECKING AUTH…</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!authenticated) {
     return <AdminLogin onSuccess={() => setAuthenticated(true)} />
   }
 
-  const handleLogout = () => {
-    logoutAdmin()
+  const handleLogout = async () => {
+    await logoutAdmin()
     navigate('/')
   }
 

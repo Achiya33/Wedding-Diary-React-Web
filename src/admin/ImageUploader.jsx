@@ -1,18 +1,20 @@
 import React, { useRef, useState } from 'react'
-import { Upload, X, Zap } from 'lucide-react'
+import { Upload, X, Zap, Cloud } from 'lucide-react'
 import { compressImage, formatFileSize, compressionRatio, isDataUrl, estimateBase64Size } from '../utils/imageUtils.js'
+import { handleImageUpload } from "../utils/cloudinary.js"; //
 
 /**
  * Reusable image uploader component with compression stats.
  * Supports:
  *   - Entering an image path (for images already in /public/images/)
- *   - Uploading a new image (compressed to base64 with stats)
+ *   - Uploading a new image (compressed & uploaded to Firebase Storage)
  *   - Preview of the current image
  *   - Compression quality slider
  */
 export default function ImageUploader({ value, onChange, label = 'Image', maxWidth = 1200 }) {
   const fileRef = useRef(null)
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [mode, setMode] = useState(value && !value.startsWith('data:') ? 'path' : 'upload')
   const [stats, setStats] = useState(null)
   const [quality, setQuality] = useState(65)
@@ -24,8 +26,9 @@ export default function ImageUploader({ value, onChange, label = 'Image', maxWid
     setLoading(true)
     setStats(null)
     try {
+      // Step 1: Compress the image
       const result = await compressImage(file, maxWidth, quality / 100)
-      onChange(result.dataUrl)
+      
       setStats({
         originalSize: result.originalSize,
         compressedSize: result.compressedSize,
@@ -33,10 +36,16 @@ export default function ImageUploader({ value, onChange, label = 'Image', maxWid
         height: result.height,
         ratio: compressionRatio(result.originalSize, result.compressedSize),
       })
+
+      
+    const downloadUrl = await handleImageUpload(result.dataUrl); //
+      
+      onChange(downloadUrl)
     } catch (err) {
       alert('Failed to process image: ' + err.message)
     } finally {
       setLoading(false)
+      setUploading(false)
     }
   }
 
@@ -120,10 +129,18 @@ export default function ImageUploader({ value, onChange, label = 'Image', maxWid
                 : 'border-gray-600 bg-gray-800/50 hover:border-[#7296a2] hover:bg-gray-800'
             }`}
           >
-            {loading ? (
+            {loading || uploading ? (
               <div className="flex items-center gap-2 text-gray-400">
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-500 border-t-[#7296a2]" />
-                <span className="text-sm">Compressing...</span>
+                <span className="text-sm">
+                  {uploading ? (
+                    <span className="flex items-center gap-1.5">
+                      <Cloud className="h-3.5 w-3.5" /> Uploading to cloud...
+                    </span>
+                  ) : (
+                    'Compressing...'
+                  )}
+                </span>
               </div>
             ) : (
               <>
@@ -132,7 +149,7 @@ export default function ImageUploader({ value, onChange, label = 'Image', maxWid
                   Click or drag & drop an image
                 </span>
                 <span className="mt-1 text-[11px] text-gray-600">
-                  Auto-compressed to WebP · Max {maxWidth}px
+                  Auto-compressed to WebP · Max {maxWidth}px · Uploaded to Firebase
                 </span>
               </>
             )}

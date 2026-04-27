@@ -1,28 +1,82 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import SectionHeading from '../components/SectionHeading.jsx'
-import GalleryCard from '../components/GalleryCard.jsx'
 import TestimonialCarousel from '../components/TestimonialCarousel.jsx'
-import { getContent } from '../utils/contentStore.js'
-import { Wine, Gem, Flower2 } from 'lucide-react'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 import { asset } from '../utils/assetPath.js'
+import { usePageTitle } from '../utils/usePageTitle.js'
 
 
 
 function ServiceIcon({ icon }) {
-  const common = "h-10 w-10 text-white"
-
   if (icon === 'glass') {
-    return <Wine className={common} strokeWidth={1.8} />
+    // Champagne glasses clinking with sparkles
+    return (
+      <svg width="42" height="42" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {/* Left glass */}
+          <path d="M18 8L14 28" />
+          <path d="M26 8L22 28" />
+          <ellipse cx="18" cy="28" rx="6" ry="2.5" />
+          <line x1="18" y1="30.5" x2="18" y2="44" />
+          <line x1="12" y1="44" x2="24" y2="44" />
+          {/* Right glass */}
+          <path d="M38 8L42 28" />
+          <path d="M46 8L50 28" />
+          <ellipse cx="44" cy="28" rx="6" ry="2.5" />
+          <line x1="44" y1="30.5" x2="44" y2="44" />
+          <line x1="38" y1="44" x2="50" y2="44" />
+          {/* Sparkles */}
+          <circle cx="31" cy="6" r="1" fill="white" />
+          <circle cx="28" cy="12" r="0.8" fill="white" />
+          <circle cx="35" cy="10" r="0.8" fill="white" />
+          <circle cx="31" cy="16" r="1.2" fill="white" />
+          <line x1="31" y1="2" x2="31" y2="4" />
+          <line x1="29" y1="3" x2="33" y2="3" />
+        </g>
+      </svg>
+    )
   }
 
   if (icon === 'rings') {
-    return <Gem className={common} strokeWidth={1.8} />
+    // Two interlinked wedding rings with heart
+    return (
+      <svg width="42" height="42" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {/* Heart on top */}
+          <path d="M32 20 C32 20 28 12 24 12 C20 12 18 15 18 18 C18 22 32 30 32 30 C32 30 46 22 46 18 C46 15 44 12 40 12 C36 12 32 20 32 20Z" fill="none" />
+          {/* Left ring */}
+          <ellipse cx="24" cy="42" rx="11" ry="11" />
+          {/* Right ring */}
+          <ellipse cx="40" cy="42" rx="11" ry="11" />
+          {/* Small diamond on left ring */}
+          <path d="M24 35 L26 33 L24 31 L22 33 Z" fill="white" />
+        </g>
+      </svg>
+    )
   }
 
-  return <Flower2 className={common} strokeWidth={1.8} />
+  // Flower bouquet
+  return (
+    <svg width="42" height="42" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        {/* Center flower */}
+        <circle cx="32" cy="20" r="4" fill="white" fillOpacity="0.3" />
+        <ellipse cx="32" cy="13" rx="3" ry="4" />
+        <ellipse cx="32" cy="27" rx="3" ry="4" />
+        <ellipse cx="25" cy="17" rx="3" ry="4" transform="rotate(-45 25 17)" />
+        <ellipse cx="39" cy="17" rx="3" ry="4" transform="rotate(45 39 17)" />
+        <ellipse cx="25" cy="23" rx="3" ry="4" transform="rotate(45 25 23)" />
+        <ellipse cx="39" cy="23" rx="3" ry="4" transform="rotate(-45 39 23)" />
+        {/* Stem */}
+        <line x1="32" y1="28" x2="32" y2="52" />
+        {/* Leaves */}
+        <path d="M32 36 C28 32 22 34 22 34 C22 34 26 38 32 36Z" fill="white" fillOpacity="0.25" />
+        <path d="M32 42 C36 38 42 40 42 40 C42 40 38 44 32 42Z" fill="white" fillOpacity="0.25" />
+      </g>
+    </svg>
+  )
 }
 
 function ServicesSection({ services }) {
@@ -199,13 +253,41 @@ function LatestBlogSection({ posts }) {
   )
 }
 
+function CustomerReviewsSection({ testimonials }) {
+  const { ref: sectionRef, isVisible } = useScrollAnimation({ threshold: 0.1 })
+  const visClass = isVisible ? 'is-visible' : ''
+
+  return (
+    <section ref={sectionRef} className="bg-[#f7f7f5] py-16 sm:py-24">
+      <div className="mx-auto max-w-[1100px] px-6">
+        {/* Section header */}
+        <div className={`mx-auto max-w-3xl text-center scroll-animate ${visClass}`}>
+          <h2 className="font-serif text-3xl tracking-[0.1em] text-[#7296a2] sm:text-[38px]">
+            DISCOVER WHAT OTHERS HAVE EXPERIENCED
+          </h2>
+          <p className="mt-5 text-[15px] leading-7 text-[#6f7680]">
+            You deserve the absolute best.<br />
+            That's why we want to make sure we are the right choice for you.
+          </p>
+        </div>
+
+        {/* Carousel */}
+        <div className={`mt-14 scroll-animate scroll-animate-delay-1 ${visClass}`}>
+          <TestimonialCarousel items={testimonials} />
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function Home() {
-  const site = getContent('site')
-  const services = getContent('services')
-  const portfolioItems = getContent('portfolio')
-  const testimonials = getContent('testimonials')
-  const blogPosts = getContent('blogs')
-  const heroSlides = getContent('heroSlides')
+  usePageTitle('Wedding Diary | Fine Art Wedding Photography', true)
+  const { data: site } = useFirebaseContent('site')
+  const { data: services } = useFirebaseContent('services')
+  const { data: portfolioItems } = useFirebaseContent('portfolio')
+  const { data: testimonials } = useFirebaseContent('testimonials')
+  const { data: blogPosts } = useFirebaseContent('blogs')
+  const { data: heroSlides } = useFirebaseContent('heroSlides')
 
   const latest = portfolioItems.slice(0, 6)
   const [activeSlide, setActiveSlide] = React.useState(0)
@@ -344,16 +426,7 @@ export default function Home() {
 
       <LatestBlogSection posts={blogPosts} />
 
-      <section className="container-page py-16">
-        <SectionHeading
-          eyebrow="Testimonial"
-          title="What our customers say"
-          subtitle="Replace these with real reviews from your clients to build trust quickly."
-        />
-        <div className="mt-10">
-          <TestimonialCarousel items={testimonials} />
-        </div>
-      </section>
+      <CustomerReviewsSection testimonials={testimonials} />
     </div>
   )
 }

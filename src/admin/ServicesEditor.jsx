@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
-import { getContent, setContent } from '../utils/contentStore.js'
+import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
 import ImageUploader from './ImageUploader.jsx'
+import { sanitizeService } from '../utils/sanitize.js'
 
 const ICON_OPTIONS = [
   { value: 'glass', label: 'Glass' },
@@ -12,15 +13,30 @@ const ICON_OPTIONS = [
 export default function ServicesEditor() {
   const [services, setServices] = useState([])
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setServices(getContent('services') || [])
+    const unsub = subscribeToContent('services', (data) => {
+      if (data) setServices(data)
+    })
+    return unsub
   }, [])
 
-  const handleSave = () => {
-    setContent('services', services)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Sanitize all services before saving
+      const sanitizedServices = services.map(sanitizeService)
+      await setContent('services', sanitizedServices)
+      setServices(sanitizedServices)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const updateService = (index, field, value) => {

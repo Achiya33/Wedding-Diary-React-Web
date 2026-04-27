@@ -21,31 +21,31 @@ export default function ExportImport() {
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const data = JSON.parse(evt.target.result)
-        const count = importContent(data)
+        const count = await importContent(data)
         setImportResult({ success: true, message: `Successfully imported ${count} sections.` })
         setTimeout(() => setImportResult(null), 4000)
       } catch (err) {
-        setImportResult({ success: false, message: 'Invalid JSON file: ' + err.message })
+        setImportResult({ success: false, message: 'Import failed: ' + err.message })
       }
     }
     reader.readAsText(file)
     e.target.value = ''
   }
 
-  const handleResetAll = () => {
+  const handleResetAll = async () => {
     if (!confirm('Reset ALL content to defaults? This will remove all your customizations.')) return
     if (!confirm('Are you absolutely sure? This cannot be undone.')) return
-    resetAllContent()
+    await resetAllContent()
     setImportResult({ success: true, message: 'All content has been reset to defaults.' })
     setTimeout(() => setImportResult(null), 4000)
   }
 
-  const handleResetSection = (key) => {
+  const handleResetSection = async (key) => {
     if (!confirm(`Reset "${key}" to default? Your customizations for this section will be lost.`)) return
-    resetContent(key)
+    await resetContent(key)
     setImportResult({ success: true, message: `"${key}" has been reset to default.` })
     setTimeout(() => setImportResult(null), 3000)
   }

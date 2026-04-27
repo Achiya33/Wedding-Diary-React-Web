@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
-import { getContent, setContent } from '../utils/contentStore.js'
+import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
+import { sanitizeSiteSettings } from '../utils/sanitize.js'
 
 export default function SiteSettingsEditor() {
   const [settings, setSettings] = useState({})
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setSettings(getContent('site') || {})
+    const unsub = subscribeToContent('site', (data) => {
+      if (data) setSettings(data)
+    })
+    return unsub
   }, [])
 
-  const handleSave = () => {
-    setContent('site', settings)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Sanitize all site settings before saving
+      const sanitizedSettings = sanitizeSiteSettings(settings)
+      await setContent('site', sanitizedSettings)
+      setSettings(sanitizedSettings)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const updateField = (field, value) => {

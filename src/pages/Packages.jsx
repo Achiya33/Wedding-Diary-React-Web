@@ -4,12 +4,15 @@ import SectionHeading from '../components/SectionHeading.jsx'
 import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
-import { getContent } from '../utils/contentStore.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { motion } from 'framer-motion'
 import { asset } from '../utils/assetPath.js'
+import { usePageTitle } from '../utils/usePageTitle.js'
+import { sanitizePackagesForm } from '../utils/sanitize.js'
 
 export default function Packages() {
-  const site = getContent('site')
+  usePageTitle('Packages')
+  const { data: site } = useFirebaseContent('site')
   const [form, setForm] = React.useState({
     groomName: '',
     brideName: '',
@@ -32,10 +35,13 @@ export default function Packages() {
     e.preventDefault()
     setStatus({ state: 'loading', message: '' })
 
+    // Sanitize form data before submission
+    const sanitizedForm = sanitizePackagesForm(form)
+
     try {
       await submitToFormspree(site.formspreeEndpoint, {
         page: 'Packages',
-        ...form,
+        ...sanitizedForm,
       })
       setStatus({ state: 'success', message: 'Submitted! We will contact you soon.' })
       setForm((f) => ({ ...f, message: '' }))

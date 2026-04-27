@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { asset } from '../utils/assetPath.js'
+import { usePageTitle } from '../utils/usePageTitle.js'
 
 
 export default function About() {
+usePageTitle('About Us')
 const sectionRef = useRef(null)
 const [showSection, setShowSection] = useState(false)
 

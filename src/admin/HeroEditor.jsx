@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, GripVertical, Save } from 'lucide-react'
-import { getContent, setContent } from '../utils/contentStore.js'
+import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
 import ImageUploader from './ImageUploader.jsx'
+import { sanitizeUrl } from '../utils/sanitize.js'
 
 export default function HeroEditor() {
   const [slides, setSlides] = useState([])
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setSlides(getContent('heroSlides') || [])
+    const unsub = subscribeToContent('heroSlides', (data) => {
+      if (data) setSlides(data)
+    })
+    return unsub
   }, [])
 
-  const handleSave = () => {
-    setContent('heroSlides', slides)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Sanitize all slide URLs before saving
+      const sanitizedSlides = slides.map(s => typeof s === 'string' ? sanitizeUrl(s) : s)
+      await setContent('heroSlides', sanitizedSlides)
+      setSlides(sanitizedSlides)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const addSlide = () => {

@@ -1,8 +1,9 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { getContent } from '../utils/contentStore.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 import { asset } from '../utils/assetPath.js'
+import { usePageTitle } from '../utils/usePageTitle.js'
 
 const categories = [
   { value: 'all', label: 'ALL' },
@@ -42,8 +43,9 @@ function AlbumCard({ item, index }) {
 }
 
 export default function Portfolio() {
+  usePageTitle('Portfolio')
   const [activeCategory, setActiveCategory] = React.useState('all')
-  const portfolioItems = getContent('portfolio')
+  const { data: portfolioItems } = useFirebaseContent('portfolio')
 
   const filtered =
     activeCategory === 'all'

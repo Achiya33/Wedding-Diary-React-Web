@@ -7,6 +7,8 @@
  *  • localStorage serves as an offline cache for fast initial display
  */
 
+import { sanitizeEndpointUrl, sanitizeString } from './sanitize.js'
+
 const ENDPOINT_KEY = 'wd_submissions_endpoint'
 const CACHE_KEY = 'wd_submissions_cache'
 const CACHE_TS_KEY = 'wd_submissions_cache_ts'
@@ -18,7 +20,8 @@ export function getSubmissionEndpoint() {
 }
 
 export function setSubmissionEndpoint(url) {
-  localStorage.setItem(ENDPOINT_KEY, (url || '').trim())
+  const sanitized = sanitizeEndpointUrl((url || '').trim())
+  localStorage.setItem(ENDPOINT_KEY, sanitized)
 }
 
 // ─── Local Cache ──────────────────────────────────────────────
@@ -74,10 +77,11 @@ export async function saveToCloud(submission) {
 
 export async function markReadInCloud(id) {
   const endpoint = getSubmissionEndpoint()
+  const cleanId = sanitizeString(id, 100)
 
   // Update local cache immediately
   const cache = getCachedSubmissions()
-  const target = cache.find((s) => s.id === id)
+  const target = cache.find((s) => s.id === cleanId)
   if (target) {
     target.read = true
     setCachedSubmissions(cache)
@@ -88,7 +92,7 @@ export async function markReadInCloud(id) {
     await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'markRead', id }),
+      body: JSON.stringify({ action: 'markRead', id: cleanId }),
       mode: 'no-cors',
     })
   } catch {}
@@ -115,9 +119,10 @@ export async function markAllReadInCloud() {
 
 export async function deleteFromCloud(id) {
   const endpoint = getSubmissionEndpoint()
+  const cleanId = sanitizeString(id, 100)
 
   // Update local cache
-  const updated = getCachedSubmissions().filter((s) => s.id !== id)
+  const updated = getCachedSubmissions().filter((s) => s.id !== cleanId)
   setCachedSubmissions(updated)
 
   if (!endpoint) return
@@ -125,7 +130,7 @@ export async function deleteFromCloud(id) {
     await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'delete', id }),
+      body: JSON.stringify({ action: 'delete', id: cleanId }),
       mode: 'no-cors',
     })
   } catch {}

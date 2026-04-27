@@ -1,8 +1,9 @@
 import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Calendar, ArrowRight } from 'lucide-react'
-import { getContent } from '../utils/contentStore.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
+import { usePageTitle } from '../utils/usePageTitle.js'
 
 /* ── Blog listing page ── */
 function BlogCard({ post, index, visClass }) {
@@ -46,10 +47,13 @@ function BlogCard({ post, index, visClass }) {
 }
 
 function BlogListPage() {
+  usePageTitle('Blog')
   const { ref: heroRef, isVisible: heroVis } = useScrollAnimation({ threshold: 0.1 })
   const { ref: gridRef, isVisible: gridVis } = useScrollAnimation({ threshold: 0.08 })
   const heroClass = heroVis ? 'is-visible' : ''
   const gridClass = gridVis ? 'is-visible' : ''
+
+  const { data: blogs } = useFirebaseContent('blogs')
 
   return (
     <div>
@@ -75,7 +79,7 @@ function BlogListPage() {
       <section ref={gridRef} className="bg-[#f7f7f5] py-16 sm:py-20">
         <div className="mx-auto max-w-[1100px] px-6">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-            {getContent('blogs').map((post, i) => (
+            {(blogs || []).map((post, i) => (
               <BlogCard key={post.slug} post={post} index={i} visClass={gridClass} />
             ))}
           </div>
@@ -85,8 +89,81 @@ function BlogListPage() {
   )
 }
 
+/* ── Content renderer – handles headers, bullets, numbered lists ── */
+function renderBlogContent(content) {
+  const blocks = content.split('\n\n')
+  const elements = []
+
+  blocks.forEach((block, i) => {
+    const lines = block.split('\n')
+
+    // Check if this block is a section header (single line ending with ":")
+    if (lines.length === 1 && lines[0].trim().endsWith(':')) {
+      elements.push(
+        <h3
+          key={i}
+          className="mt-8 mb-4 font-serif text-xl text-ink sm:text-[22px]"
+        >
+          {lines[0].trim().replace(/:$/, '')}
+        </h3>
+      )
+      return
+    }
+
+    // Check if block contains bullet items (lines starting with "- ")
+    const bulletLines = lines.filter((l) => l.trim().startsWith('- '))
+    if (bulletLines.length > 0 && bulletLines.length === lines.length) {
+      elements.push(
+        <ul key={i} className="mb-6 ml-1 space-y-2.5">
+          {bulletLines.map((line, j) => (
+            <li
+              key={j}
+              className="flex items-start gap-3 text-[15px] leading-[1.85] text-[#4a4f57]"
+            >
+              <span className="mt-[10px] block h-[5px] w-[5px] flex-shrink-0 rounded-full bg-[#7296a2]" />
+              <span>{line.trim().replace(/^-\s*/, '')}</span>
+            </li>
+          ))}
+        </ul>
+      )
+      return
+    }
+
+    // Check if block contains numbered items (lines starting with "1.", "2.", etc.)
+    const numberedLines = lines.filter((l) => /^\d+\.\s/.test(l.trim()))
+    if (numberedLines.length > 0 && numberedLines.length === lines.length) {
+      elements.push(
+        <ol key={i} className="mb-6 ml-1 space-y-2.5">
+          {numberedLines.map((line, j) => (
+            <li
+              key={j}
+              className="flex items-start gap-3 text-[15px] leading-[1.85] text-[#4a4f57]"
+            >
+              <span className="mt-[2px] flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#7296a2]/10 text-[12px] font-semibold text-[#7296a2]">
+                {j + 1}
+              </span>
+              <span>{line.trim().replace(/^\d+\.\s*/, '')}</span>
+            </li>
+          ))}
+        </ol>
+      )
+      return
+    }
+
+    // Regular paragraph
+    elements.push(
+      <p key={i} className="mb-5 text-[15px] leading-[1.85] text-[#4a4f57]">
+        {block}
+      </p>
+    )
+  })
+
+  return elements
+}
+
 /* ── Single blog detail page ── */
 function BlogDetailPage({ post }) {
+  usePageTitle(post.title)
   const { ref: contentRef, isVisible: contentVis } = useScrollAnimation({ threshold: 0.05 })
   const visClass = contentVis ? 'is-visible' : ''
 
@@ -124,14 +201,7 @@ function BlogDetailPage({ post }) {
           </Link>
 
           <article className="prose prose-lg max-w-none">
-            {post.content.split('\n\n').map((paragraph, i) => (
-              <p
-                key={i}
-                className="mb-5 text-[15px] leading-[1.85] text-[#4a4f57]"
-              >
-                {paragraph}
-              </p>
-            ))}
+            {renderBlogContent(post.content)}
           </article>
 
           {/* Bottom nav */}
@@ -152,9 +222,10 @@ function BlogDetailPage({ post }) {
 /* ── Router wrapper ── */
 export default function Blog() {
   const { slug } = useParams()
+  const { data: blogs } = useFirebaseContent('blogs')
 
   if (slug) {
-    const post = getContent('blogs').find((p) => p.slug === slug)
+    const post = (blogs || []).find((p) => p.slug === slug)
     if (!post) {
       return (
         <div className="flex min-h-screen items-center justify-center pt-24">

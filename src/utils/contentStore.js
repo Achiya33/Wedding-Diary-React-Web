@@ -1,6 +1,14 @@
 /**
- * Content Store — localStorage-based content management
- * Falls back to hardcoded defaults from src/data/ when no override exists.
+ * Content Store — Firebase Realtime Database with local cache fallback
+ * 
+ * Architecture:
+ *  • Primary storage: Firebase Realtime Database (syncs across all devices)
+ *  • Local cache: localStorage (for instant first-load & offline fallback)
+ *  • Hardcoded defaults: from src/data/ files (ultimate fallback)
+ * 
+ * Flow:
+ *  READ:  localStorage cache → show instantly → Firebase subscription updates in background
+ *  WRITE: Firebase → on success, update localStorage cache
  */
 
 import { portfolioItems as defaultPortfolio } from '../data/portfolio.js'
@@ -8,8 +16,11 @@ import { blogPosts as defaultBlogs } from '../data/blogs.js'
 import { testimonials as defaultTestimonials } from '../data/testimonials.js'
 import { services as defaultServices } from '../data/services.js'
 import { site as defaultSite } from '../data/site.js'
+import { dbRead, dbWrite, dbSubscribe, isFirebaseConfigured } from './firebase.js'
+import { sanitizeFormData } from './sanitize.js'
 
 const PREFIX = 'wd_'
+const DB_PATH = 'content'
 
 const defaultHeroSlides = [
   '/images/home/WDM02710.webp',
@@ -26,64 +37,152 @@ const DEFAULTS = {
   site: defaultSite,
 }
 
-/**
- * Get content for a given key. Returns localStorage override if present,
- * otherwise returns the hardcoded default.
- */
-export function getContent(key) {
+// ─── Local Cache ──────────────────────────────────────────────
+
+function getCached(key) {
   try {
     const stored = localStorage.getItem(PREFIX + key)
-    if (stored) {
-      return JSON.parse(stored)
-    }
+    if (stored) return JSON.parse(stored)
   } catch (e) {
-    console.warn(`Failed to read content for key "${key}":`, e)
+    console.warn(`Failed to read cache for "${key}":`, e)
   }
+  return null
+}
+
+function setCache(key, data) {
+  try {
+    localStorage.setItem(PREFIX + key, JSON.stringify(data))
+  } catch (e) {
+    console.warn(`Failed to write cache for "${key}":`, e)
+  }
+}
+
+// ─── Content Read (Sync — from cache/defaults) ────────────────
+
+/**
+ * Get content synchronously. Returns cached data or hardcoded defaults.
+ * Used for immediate render before Firebase data arrives.
+ */
+export function getContent(key) {
+  const cached = getCached(key)
+  if (cached !== null) return cached
   return DEFAULTS[key] ?? null
 }
 
+// ─── Content Write (Async — to Firebase + cache) ──────────────
+
 /**
- * Save content for a given key to localStorage.
+ * Save content to Firebase and local cache.
+ * Returns true on success, throws on failure.
  */
-export function setContent(key, data) {
-  try {
-    localStorage.setItem(PREFIX + key, JSON.stringify(data))
-    return true
-  } catch (e) {
-    console.error(`Failed to save content for key "${key}":`, e)
-    // Likely quota exceeded
-    if (e.name === 'QuotaExceededError') {
-      alert('Storage is full! Try removing some images or exporting and clearing data.')
+export async function setContent(key, data) {
+  // Sanitize all string values before writing
+  const sanitized = sanitizeFormData(data)
+  if (isFirebaseConfigured()) {
+    await dbWrite(`${DB_PATH}/${key}`, sanitized)
+  }
+  // Always update local cache
+  setCache(key, sanitized)
+  return true
+}
+
+// ─── Real-time Subscription ───────────────────────────────────
+
+/**
+ * Subscribe to real-time content updates from Firebase.
+ * Callback is called with the latest data whenever it changes.
+ * Returns an unsubscribe function.
+ */
+export function subscribeToContent(key, callback) {
+  if (!isFirebaseConfigured()) {
+    // No Firebase — just return cached/default data once
+    callback(getContent(key))
+    return () => {}
+  }
+
+  return dbSubscribe(`${DB_PATH}/${key}`, (data) => {
+    if (data !== null) {
+      setCache(key, data) // Update local cache
+      callback(data)
+    } else {
+      // No data in Firebase yet — use defaults
+      callback(DEFAULTS[key] ?? null)
     }
-    return false
+  })
+}
+
+// ─── Firebase Data Loader (one-time async read) ───────────────
+
+/**
+ * Load content from Firebase (async). 
+ * Falls back to cache → defaults if Firebase is unavailable.
+ */
+export async function loadContent(key) {
+  if (isFirebaseConfigured()) {
+    try {
+      const data = await dbRead(`${DB_PATH}/${key}`)
+      if (data !== null) {
+        setCache(key, data)
+        return data
+      }
+    } catch (e) {
+      console.warn(`Firebase load failed for "${key}", using fallback`)
+    }
+  }
+  return getContent(key)
+}
+
+// ─── Seed Defaults to Firebase ────────────────────────────────
+
+/**
+ * Upload all default content to Firebase (run once during initial setup).
+ * Only writes keys that don't already exist in Firebase.
+ */
+export async function seedDefaults() {
+  if (!isFirebaseConfigured()) return
+  
+  for (const key of Object.keys(DEFAULTS)) {
+    const existing = await dbRead(`${DB_PATH}/${key}`)
+    if (existing === null) {
+      await dbWrite(`${DB_PATH}/${key}`, DEFAULTS[key])
+      console.log(`Seeded default data for "${key}"`)
+    }
   }
 }
 
+// ─── Legacy Compatibility ─────────────────────────────────────
+
 /**
- * Check if a specific key has been overridden in localStorage.
+ * Check if a specific key has been overridden.
  */
 export function hasOverride(key) {
-  return localStorage.getItem(PREFIX + key) !== null
+  return getCached(key) !== null
 }
 
 /**
- * Reset a specific key to its default value (remove override).
+ * Reset a specific key to its default value.
  */
-export function resetContent(key) {
+export async function resetContent(key) {
   localStorage.removeItem(PREFIX + key)
+  if (isFirebaseConfigured()) {
+    await dbWrite(`${DB_PATH}/${key}`, DEFAULTS[key])
+  }
 }
 
 /**
  * Reset ALL content to defaults.
  */
-export function resetAllContent() {
+export async function resetAllContent() {
   Object.keys(DEFAULTS).forEach((key) => {
     localStorage.removeItem(PREFIX + key)
   })
+  if (isFirebaseConfigured()) {
+    await dbWrite(DB_PATH, DEFAULTS)
+  }
 }
 
 /**
- * Export all content (including defaults for keys without overrides) as a JSON object.
+ * Export all content as a JSON object.
  */
 export function exportAllContent() {
   const data = {}
@@ -94,16 +193,17 @@ export function exportAllContent() {
 }
 
 /**
- * Import content from a JSON object. Merges with defaults.
+ * Import content from a JSON object.
  */
-export function importContent(data) {
+export async function importContent(data) {
   let count = 0
-  Object.keys(DEFAULTS).forEach((key) => {
+  for (const key of Object.keys(DEFAULTS)) {
     if (data[key] !== undefined) {
-      setContent(key, data[key])
+      // setContent already sanitizes data internally
+      await setContent(key, data[key])
       count++
     }
-  })
+  }
   return count
 }
 
@@ -131,7 +231,7 @@ export function getStorageUsage() {
   Object.keys(DEFAULTS).forEach((key) => {
     const item = localStorage.getItem(PREFIX + key)
     if (item) {
-      total += item.length * 2 // UTF-16 characters = 2 bytes each
+      total += item.length * 2
     }
   })
   return total

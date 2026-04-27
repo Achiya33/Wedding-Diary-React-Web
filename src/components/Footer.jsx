@@ -1,18 +1,19 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react'
-import { getContent } from '../utils/contentStore.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 
 export default function Footer() {
-  const site = getContent('site')
+  const { data: site } = useFirebaseContent('site')
   return (
-    <footer className="mt-16 border-t border-black/10 bg-parchment">
+    <footer className="border-t border-black/10 bg-parchment">
       <div className="container-page py-14">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h3 className="font-serif text-xl">About</h3>
             <p className="mt-3 text-sm text-ink/80 leading-relaxed">
-              {site.tagline}. Replace this text with a short brand intro (2–3 lines).
+             “Capturing love in its purest form, we turn fleeting moments into timeless memories.
+With an artistic eye and heartfelt storytelling, every frame reflects your unique journey together.”
             </p>
             <div className="mt-5 flex items-center gap-3">
               <a

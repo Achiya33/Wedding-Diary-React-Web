@@ -1,8 +1,9 @@
 import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getContent } from '../utils/contentStore.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
+import { usePageTitle } from '../utils/usePageTitle.js'
 
 function AlbumPhoto({ src, alt, index, onClick }) {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.08 })
@@ -28,9 +29,10 @@ function AlbumPhoto({ src, alt, index, onClick }) {
 
 export default function PortfolioDetails() {
   const { slug } = useParams()
-  const portfolioItems = getContent('portfolio')
+  const { data: portfolioItems } = useFirebaseContent('portfolio')
   const item = portfolioItems.find((p) => p.slug === slug)
   const [activeIndex, setActiveIndex] = React.useState(null)
+  usePageTitle(item ? item.title : 'Portfolio')
 
   // Keyboard navigation for lightbox
   React.useEffect(() => {

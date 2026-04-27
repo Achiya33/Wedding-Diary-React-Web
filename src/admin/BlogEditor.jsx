@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, Save, ChevronDown, ChevronUp } from 'lucide-react'
-import { getContent, setContent } from '../utils/contentStore.js'
+import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
 import { generateId } from '../utils/imageUtils.js'
 import ImageUploader from './ImageUploader.jsx'
+import { sanitizeBlogPost } from '../utils/sanitize.js'
 
 function BlogItemEditor({ post, onChange, onDelete, isOpen, onToggle }) {
   const updateField = (field, value) => {
@@ -51,7 +52,7 @@ function BlogItemEditor({ post, onChange, onDelete, isOpen, onToggle }) {
                 value={post.date || ''}
                 onChange={(e) => updateField('date', e.target.value)}
                 className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#7296a2] focus:outline-none"
-                placeholder="e.g. December 25, 2024"
+                placeholder="e.g. March 01, 2026"
               />
             </div>
           </div>
@@ -113,15 +114,30 @@ export default function BlogEditor() {
   const [posts, setPosts] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setPosts(getContent('blogs') || [])
+    const unsub = subscribeToContent('blogs', (data) => {
+      if (data) setPosts(data)
+    })
+    return unsub
   }, [])
 
-  const handleSave = () => {
-    setContent('blogs', posts)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Sanitize all blog posts before saving
+      const sanitizedPosts = posts.map(sanitizeBlogPost)
+      await setContent('blogs', sanitizedPosts)
+      setPosts(sanitizedPosts)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const addPost = () => {

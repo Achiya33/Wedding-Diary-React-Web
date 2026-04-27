@@ -10,6 +10,7 @@
  */
 
 import { saveToCloud } from './submissionDB.js'
+import { sanitizeFormData, sanitizeString } from './sanitize.js'
 
 // ─── Submit Form ──────────────────────────────────────────────
 
@@ -22,11 +23,26 @@ import { saveToCloud } from './submissionDB.js'
 export async function submitToFormspree(endpoint, payload) {
   const { page, ...formData } = payload
 
-  // Build the submission record
+  // Sanitize all form data before processing
+  const sanitizedFormData = sanitizeFormData(formData, {
+    name: { maxLength: 200 },
+    email: { type: 'email' },
+    phone: { type: 'phone' },
+    groomName: { maxLength: 200 },
+    brideName: { maxLength: 200 },
+    message: { maxLength: 10000 },
+    location: { maxLength: 500 },
+    plannedDate: { maxLength: 50 },
+    shootType: { maxLength: 100 },
+    functionTime: { maxLength: 100 },
+    referral: { maxLength: 200 },
+  })
+
+  // Build the submission record with sanitized data
   const submission = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    page: page || 'Unknown',
-    data: formData,
+    page: sanitizeString(page || 'Unknown', 50),
+    data: sanitizedFormData,
     timestamp: new Date().toISOString(),
     read: false,
   }
@@ -49,7 +65,7 @@ export async function submitToFormspree(endpoint, payload) {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ page: sanitizeString(page || 'Unknown', 50), ...sanitizedFormData }),
   })
 
   if (!res.ok) {

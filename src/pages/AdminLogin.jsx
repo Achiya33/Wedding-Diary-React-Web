@@ -1,105 +1,105 @@
 import React, { useState } from 'react'
-import { Lock, Eye, EyeOff } from 'lucide-react'
+import { Lock, Eye, EyeOff, Mail } from 'lucide-react'
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  updatePassword,
+  deleteUser,
+} from 'firebase/auth'
+import { auth } from '../utils/firebase.js'
+import { sanitizeEmail, sanitizeString } from '../utils/sanitize.js'
 
-// Default master admin — SHA-256 of "Yohandeyyo@mandannena#"
-const DEFAULT_ADMIN_HASH = 'cdfaf31035ecc3085574452f4da99c9eb00bb1cb847ed5095404e6be58f401b3'
+// ─── Session helpers (Firebase Auth based) ────────────────────
 
-const ADMINS_KEY = 'wd_admins'
-const AUTH_KEY = 'wd_admin_auth'
-const AUTH_USER_KEY = 'wd_admin_user'
+let _currentUser = null
 
-// ─── Hashing ──────────────────────────────────────────────────
-export async function sha256(message) {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(message)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-// ─── Admin account helpers ────────────────────────────────────
-
-/** Get all admin accounts: [{username, hash, role}] */
-export function getAdmins() {
-  try {
-    const stored = localStorage.getItem(ADMINS_KEY)
-    if (stored) return JSON.parse(stored)
-  } catch {}
-  // Default: the master admin
-  return [{ username: 'master', hash: DEFAULT_ADMIN_HASH, role: 'owner' }]
-}
-
-/** Save admin accounts to localStorage */
-export function saveAdmins(admins) {
-  localStorage.setItem(ADMINS_KEY, JSON.stringify(admins))
-}
-
-/** Verify password against all admin accounts. Returns matched username or null. */
-export async function verifyPassword(password) {
-  const hash = await sha256(password)
-  const admins = getAdmins()
-
-  // Always check default master hash too (can't be deleted from code)
-  if (hash === DEFAULT_ADMIN_HASH) return 'master'
-
-  const matched = admins.find((a) => a.hash === hash)
-  return matched ? matched.username : null
-}
-
-/** Add a new admin account */
-export async function addAdmin(username, password) {
-  const admins = getAdmins()
-  const exists = admins.find((a) => a.username.toLowerCase() === username.toLowerCase())
-  if (exists) throw new Error('Username already exists')
-
-  const hash = await sha256(password)
-  admins.push({ username, hash, role: 'admin' })
-  saveAdmins(admins)
-  return admins
-}
-
-/** Remove an admin account (cannot remove master owner) */
-export function removeAdmin(username) {
-  const admins = getAdmins()
-  const target = admins.find((a) => a.username === username)
-  if (!target) throw new Error('Admin not found')
-  if (target.role === 'owner') throw new Error('Cannot remove the master admin')
-
-  const updated = admins.filter((a) => a.username !== username)
-  saveAdmins(updated)
-  return updated
-}
-
-/** Change password for an admin account */
-export async function changePassword(username, newPassword) {
-  const admins = getAdmins()
-  const target = admins.find((a) => a.username === username)
-  if (!target) throw new Error('Admin not found')
-
-  target.hash = await sha256(newPassword)
-  saveAdmins(admins)
-  return admins
-}
-
-// ─── Session helpers ──────────────────────────────────────────
+// Listen for auth state changes
+onAuthStateChanged(auth, (user) => {
+  _currentUser = user
+})
 
 export function isAdminAuthenticated() {
-  return sessionStorage.getItem(AUTH_KEY) === 'true'
+  return !!auth.currentUser
 }
 
 export function getLoggedInUser() {
-  return sessionStorage.getItem(AUTH_USER_KEY) || 'master'
+  return auth.currentUser?.email || ''
 }
 
-export function logoutAdmin() {
-  sessionStorage.removeItem(AUTH_KEY)
-  sessionStorage.removeItem(AUTH_USER_KEY)
+export function getLoggedInUserDisplayName() {
+  const email = auth.currentUser?.email || ''
+  return email.split('@')[0] || 'Admin'
+}
+
+export async function logoutAdmin() {
+  try {
+    await signOut(auth)
+  } catch (err) {
+    console.error('Logout error:', err)
+  }
+}
+
+// ─── Admin account management ─────────────────────────────────
+
+/**
+ * Get list of admin accounts.
+ * In Firebase Auth, we can't list users from client-side.
+ * We store admin info in Realtime Database.
+ */
+import { dbRead, dbWrite } from '../utils/firebase.js'
+
+const ADMINS_DB_PATH = 'admins'
+
+export async function getAdmins() {
+  const admins = await dbRead(ADMINS_DB_PATH)
+  if (admins && Array.isArray(admins)) return admins
+  // Return current user as default admin
+  if (auth.currentUser) {
+    return [{ email: auth.currentUser.email, role: 'owner' }]
+  }
+  return []
+}
+
+export async function addAdmin(email, password) {
+  const cleanEmail = sanitizeEmail(email)
+  // We need to use the Firebase Admin SDK or a custom approach
+  // For client-side, we'll store admin info in the database
+  // and the user needs to be created via Firebase Console or sign-up
+  const admins = await getAdmins()
+  const exists = admins.find(
+    (a) => a.email.toLowerCase() === cleanEmail.toLowerCase()
+  )
+  if (exists) throw new Error('Admin already exists')
+
+  // Store in database
+  admins.push({ email: cleanEmail, role: 'admin' })
+  await dbWrite(ADMINS_DB_PATH, admins)
+
+  return admins
+}
+
+export async function removeAdmin(email) {
+  const admins = await getAdmins()
+  const target = admins.find((a) => a.email === email)
+  if (!target) throw new Error('Admin not found')
+  if (target.role === 'owner') throw new Error('Cannot remove the owner admin')
+
+  const updated = admins.filter((a) => a.email !== email)
+  await dbWrite(ADMINS_DB_PATH, updated)
+  return updated
+}
+
+export async function changePassword(newPassword) {
+  if (!auth.currentUser) throw new Error('Not logged in')
+  await updatePassword(auth.currentUser, newPassword)
 }
 
 // ─── Login Component ──────────────────────────────────────────
 
 export default function AdminLogin({ onSuccess }) {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -110,18 +110,37 @@ export default function AdminLogin({ onSuccess }) {
     setLoading(true)
     setError('')
 
+    const cleanEmail = sanitizeEmail(email)
+
     try {
-      const matchedUser = await verifyPassword(password)
-      if (matchedUser) {
-        sessionStorage.setItem(AUTH_KEY, 'true')
-        sessionStorage.setItem(AUTH_USER_KEY, matchedUser)
-        onSuccess()
-      } else {
-        setError('Incorrect password')
-        setPassword('')
+      await signInWithEmailAndPassword(auth, cleanEmail, password)
+      
+      // Register as owner if first admin
+      const admins = await getAdmins()
+      if (admins.length === 0) {
+        await dbWrite(ADMINS_DB_PATH, [{ email, role: 'owner' }])
       }
+      
+      onSuccess()
     } catch (err) {
-      setError('Authentication error')
+      console.error('Login error:', err)
+      switch (err.code) {
+        case 'auth/user-not-found':
+          setError('No admin account with this email')
+          break
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          setError('Incorrect password')
+          break
+        case 'auth/invalid-email':
+          setError('Invalid email address')
+          break
+        case 'auth/too-many-requests':
+          setError('Too many attempts. Please try again later.')
+          break
+        default:
+          setError(err.message || 'Authentication error')
+      }
     } finally {
       setLoading(false)
     }
@@ -148,18 +167,36 @@ export default function AdminLogin({ onSuccess }) {
             ADMIN ACCESS
           </h1>
           <p className="mt-2 text-center text-sm text-gray-500">
-            Enter your password to continue
+            Sign in with your admin credentials
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            {/* Email field */}
             <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                <Mail className="h-4 w-4" />
+              </div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Admin email"
+                autoFocus
+                className="w-full rounded-xl border border-gray-700 bg-gray-800 pl-11 pr-4 py-3.5 text-sm text-white placeholder-gray-500 transition focus:border-[#7296a2] focus:outline-none focus:ring-2 focus:ring-[#7296a2]/20"
+              />
+            </div>
+
+            {/* Password field */}
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                <Lock className="h-4 w-4" />
+              </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
-                autoFocus
-                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-5 py-3.5 pr-12 text-sm text-white placeholder-gray-500 transition focus:border-[#7296a2] focus:outline-none focus:ring-2 focus:ring-[#7296a2]/20"
+                placeholder="Password"
+                className="w-full rounded-xl border border-gray-700 bg-gray-800 pl-11 pr-12 py-3.5 text-sm text-white placeholder-gray-500 transition focus:border-[#7296a2] focus:outline-none focus:ring-2 focus:ring-[#7296a2]/20"
               />
               <button
                 type="button"
@@ -178,19 +215,23 @@ export default function AdminLogin({ onSuccess }) {
 
             <button
               type="submit"
-              disabled={loading || !password}
+              disabled={loading || !email || !password}
               className="w-full rounded-xl bg-gradient-to-r from-[#7296a2] to-[#5a7d88] px-6 py-3.5 text-sm font-medium tracking-[0.15em] text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  VERIFYING...
+                  SIGNING IN...
                 </span>
               ) : (
-                'UNLOCK'
+                'SIGN IN'
               )}
             </button>
           </form>
+
+          <p className="mt-6 text-center text-[11px] text-gray-600">
+            Create admin accounts in Firebase Console → Authentication
+          </p>
         </div>
       </div>
     </div>

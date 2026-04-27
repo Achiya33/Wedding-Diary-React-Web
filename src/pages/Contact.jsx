@@ -4,11 +4,14 @@ import SectionHeading from '../components/SectionHeading.jsx'
 import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
-import { getContent } from '../utils/contentStore.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { asset } from '../utils/assetPath.js'
+import { usePageTitle } from '../utils/usePageTitle.js'
+import { sanitizeContactForm } from '../utils/sanitize.js'
 
 export default function Contact() {
-  const site = getContent('site')
+  usePageTitle('Contact Us')
+  const { data: site } = useFirebaseContent('site')
   const [form, setForm] = React.useState({ name: '', email: '', message: '' })
   const [status, setStatus] = React.useState({ state: 'idle', message: '' })
 
@@ -20,10 +23,13 @@ export default function Contact() {
     e.preventDefault()
     setStatus({ state: 'loading', message: '' })
 
+    // Sanitize form data before submission
+    const sanitizedForm = sanitizeContactForm(form)
+
     try {
       await submitToFormspree(site.formspreeEndpoint, {
         page: 'Contact',
-        ...form,
+        ...sanitizedForm,
       })
       setStatus({ state: 'success', message: 'Message sent! We will reply soon.' })
       setForm({ name: '', email: '', message: '' })

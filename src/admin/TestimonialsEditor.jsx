@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, Save } from 'lucide-react'
-import { getContent, setContent } from '../utils/contentStore.js'
+import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
+import { sanitizeTestimonial } from '../utils/sanitize.js'
 
 export default function TestimonialsEditor() {
   const [items, setItems] = useState([])
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setItems(getContent('testimonials') || [])
+    const unsub = subscribeToContent('testimonials', (data) => {
+      if (data) setItems(data)
+    })
+    return unsub
   }, [])
 
-  const handleSave = () => {
-    setContent('testimonials', items)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Sanitize all testimonials before saving
+      const sanitizedItems = items.map(sanitizeTestimonial)
+      await setContent('testimonials', sanitizedItems)
+      setItems(sanitizedItems)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const addItem = () => {
