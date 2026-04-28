@@ -5,14 +5,6 @@ import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 
-const categories = [
-  { value: 'all', label: 'ALL' },
-  { value: 'Wedding', label: 'WEDDINGS' },
-  { value: 'Engagement', label: 'ENGAGEMENTS' },
-  { value: 'Pre Wedding', label: 'PRE WEDDING SHOOTS' },
-  { value: 'Homecoming', label: 'HOMECOMINGS' },
-]
-
 function AlbumCard({ item, index }) {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 })
   const visClass = isVisible ? 'is-visible' : ''
@@ -47,18 +39,38 @@ export default function Portfolio() {
   const [activeCategory, setActiveCategory] = React.useState('all')
   const { data: portfolioItems } = useFirebaseContent('portfolio')
 
+  // Generate categories dynamically from the portfolio items
+  const dynamicCategories = React.useMemo(() => {
+    if (!portfolioItems) return [{ value: 'all', label: 'ALL' }]
+    
+    const cats = new Set()
+    portfolioItems.forEach((item) => {
+      if (item.category) cats.add(item.category)
+    })
+    
+    return [
+      { value: 'all', label: 'ALL' },
+      ...Array.from(cats).map((cat) => ({ value: cat, label: cat.toUpperCase() }))
+    ]
+  }, [portfolioItems])
+
   const filtered =
     activeCategory === 'all'
       ? portfolioItems
       : portfolioItems.filter((item) => item.category === activeCategory)
+
+  // Use the cover of the first portfolio item as the hero image, or fallback to the default static image
+  const heroImage = portfolioItems && portfolioItems.length > 0 
+    ? (portfolioItems[0].coverImage || portfolioItems[0].cover) 
+    : asset("/images/pak/DSC05262 (3).webp")
 
   return (
     <div>
       {/* Hero Section */}
       <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
         <img
-          src={asset("/images/pak/DSC05262 (3).webp")}
-          alt="About Us"
+          src={heroImage}
+          alt="Portfolio"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/30" />
@@ -73,7 +85,7 @@ export default function Portfolio() {
       <section className="border-b border-black/10 bg-white">
         <div className="mx-auto max-w-[1200px] px-6">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 py-6">
-            {categories.map((cat) => (
+            {dynamicCategories.map((cat) => (
               <button
                 key={cat.value}
                 type="button"
