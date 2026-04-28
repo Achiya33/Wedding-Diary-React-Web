@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "clean-dist": "node -e \"const fs=require('fs');if(fs.existsSync('dist/images')){fs.rmSync('dist/images',{recursive:true});console.log('Removed dist/images (saved ~317 MB)');}\"",
+    "predeploy": "npm run build && npm run clean-dist",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {

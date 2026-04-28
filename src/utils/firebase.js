@@ -83,8 +83,11 @@ export function dbSubscribe(path, callback) {
  * Check if Firebase is properly configured (not using placeholder values)
  */
 export function isFirebaseConfigured() {
-  return (
+  return !!(
+    firebaseConfig.apiKey &&
     firebaseConfig.apiKey !== 'YOUR_API_KEY' &&
-    firebaseConfig.projectId !== 'YOUR_PROJECT_ID'
+    firebaseConfig.projectId &&
+    firebaseConfig.projectId !== 'YOUR_PROJECT_ID' &&
+    firebaseConfig.databaseURL
   )
 }
