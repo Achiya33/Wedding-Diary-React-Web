@@ -16,20 +16,22 @@ import { sanitizeEmail, sanitizeString } from '../utils/sanitize.js'
 let _currentUser = null
 
 // Listen for auth state changes
-onAuthStateChanged(auth, (user) => {
-  _currentUser = user
-})
+if (auth) {
+  onAuthStateChanged(auth, (user) => {
+    _currentUser = user
+  })
+}
 
 export function isAdminAuthenticated() {
-  return !!auth.currentUser
+  return !!(auth && auth.currentUser)
 }
 
 export function getLoggedInUser() {
-  return auth.currentUser?.email || ''
+  return auth?.currentUser?.email || ''
 }
 
 export function getLoggedInUserDisplayName() {
-  const email = auth.currentUser?.email || ''
+  const email = auth?.currentUser?.email || ''
   return email.split('@')[0] || 'Admin'
 }
 
@@ -56,7 +58,7 @@ export async function getAdmins() {
   const admins = await dbRead(ADMINS_DB_PATH)
   if (admins && Array.isArray(admins)) return admins
   // Return current user as default admin
-  if (auth.currentUser) {
+  if (auth && auth.currentUser) {
     return [{ email: auth.currentUser.email, role: 'owner' }]
   }
   return []
@@ -92,7 +94,7 @@ export async function removeAdmin(email) {
 }
 
 export async function changePassword(newPassword) {
-  if (!auth.currentUser) throw new Error('Not logged in')
+  if (!auth || !auth.currentUser) throw new Error('Not logged in')
   await updatePassword(auth.currentUser, newPassword)
 }
 

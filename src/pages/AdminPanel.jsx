@@ -90,6 +90,10 @@ export default function AdminPanel() {
 
   // Listen for Firebase Auth state changes
   useEffect(() => {
+    if (!auth) {
+      setAuthChecked(true)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setAuthenticated(!!user)
       setAuthChecked(true)

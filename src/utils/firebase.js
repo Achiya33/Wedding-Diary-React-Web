@@ -19,7 +19,6 @@ import { getAuth } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
 
 // ─── Firebase Config ──────────────────────────────────────────
-// TODO: Replace with your Firebase project credentials
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -31,11 +30,45 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// ─── Initialize Firebase ──────────────────────────────────────
-const app = initializeApp(firebaseConfig)
-export const db = getDatabase(app)
-export const auth = getAuth(app)
-export const storage = getStorage(app)
+// ─── Check config validity BEFORE initializing ────────────────
+/**
+ * Check if Firebase is properly configured (not using placeholder values)
+ */
+export function isFirebaseConfigured() {
+  return !!(
+    firebaseConfig.apiKey &&
+    firebaseConfig.apiKey !== 'YOUR_API_KEY' &&
+    firebaseConfig.projectId &&
+    firebaseConfig.projectId !== 'YOUR_PROJECT_ID' &&
+    firebaseConfig.databaseURL
+  )
+}
+
+// ─── Initialize Firebase (only if config is valid) ────────────
+let app = null
+let _db = null
+let _auth = null
+let _storage = null
+
+if (isFirebaseConfigured()) {
+  try {
+    app = initializeApp(firebaseConfig)
+    _db = getDatabase(app)
+    _auth = getAuth(app)
+    _storage = getStorage(app)
+  } catch (err) {
+    console.warn('Firebase initialization failed:', err.message)
+  }
+} else {
+  console.warn(
+    'Firebase is not configured. The app will use local/default data only. ' +
+    'To connect Firebase, add valid credentials to your .env file.'
+  )
+}
+
+export const db = _db
+export const auth = _auth
+export const storage = _storage
 
 // ─── Database Helpers ─────────────────────────────────────────
 
@@ -43,6 +76,7 @@ export const storage = getStorage(app)
  * Read data from Firebase Realtime Database
  */
 export async function dbRead(path) {
+  if (!db) return null
   try {
     const snapshot = await get(ref(db, path))
     return snapshot.exists() ? snapshot.val() : null
@@ -56,6 +90,7 @@ export async function dbRead(path) {
  * Write data to Firebase Realtime Database
  */
 export async function dbWrite(path, data) {
+  if (!db) throw new Error('Firebase is not configured')
   try {
     await set(ref(db, path), data)
     return true
@@ -70,6 +105,7 @@ export async function dbWrite(path, data) {
  * Returns an unsubscribe function.
  */
 export function dbSubscribe(path, callback) {
+  if (!db) return () => {}
   const dbRef = ref(db, path)
   const unsubscribe = onValue(dbRef, (snapshot) => {
     callback(snapshot.exists() ? snapshot.val() : null)
@@ -77,17 +113,4 @@ export function dbSubscribe(path, callback) {
     console.warn(`Firebase subscription error for "${path}":`, error)
   })
   return unsubscribe
-}
-
-/**
- * Check if Firebase is properly configured (not using placeholder values)
- */
-export function isFirebaseConfigured() {
-  return !!(
-    firebaseConfig.apiKey &&
-    firebaseConfig.apiKey !== 'YOUR_API_KEY' &&
-    firebaseConfig.projectId &&
-    firebaseConfig.projectId !== 'YOUR_PROJECT_ID' &&
-    firebaseConfig.databaseURL
-  )
 }
