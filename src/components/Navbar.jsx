@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
-import { site } from '../data/site.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { asset } from '../utils/assetPath.js'
 
 const nav = [
@@ -12,10 +12,14 @@ const nav = [
   { to: '/contact', label: 'Contact Us' },
 ]
 
-function Brand({ light }) {
+function Brand({ light, logos }) {
+  // Use Firebase logos if available, otherwise fall back to static assets
+  const lightLogo = logos?.light || asset("/logo.png")
+  const darkLogo = logos?.dark || asset("/logob.png")
+
   return (
     <img
-      src={light ? asset("/logo.png") : asset("/logob.png")}
+      src={light ? lightLogo : darkLogo}
       alt="Logo"
       className="h-10 w-auto object-contain transition-all duration-300"
     />
@@ -50,6 +54,7 @@ export default function Navbar() {
   const isHome = location.pathname === '/'
   const [open, setOpen] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
+  const { data: site } = useFirebaseContent('site')
 
   React.useEffect(() => {
     function onScroll() {
@@ -75,7 +80,7 @@ export default function Navbar() {
     >
       <div className="mx-auto flex h-24 w-full max-w-[1500px] items-center justify-between px-5 sm:px-8 lg:px-12">
         <Link to="/" className="shrink-0" aria-label="Go to homepage">
-          <Brand light={light} />
+          <Brand light={light} logos={site?.logos} />
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex xl:gap-10">

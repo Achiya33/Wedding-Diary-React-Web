@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
 import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
 import { sanitizeSiteSettings } from '../utils/sanitize.js'
+import ImageUploader from './ImageUploader.jsx'
 
 export default function SiteSettingsEditor() {
   const [settings, setSettings] = useState({})
@@ -40,6 +41,27 @@ export default function SiteSettingsEditor() {
     setSettings({
       ...settings,
       socials: { ...(settings.socials || {}), [field]: value },
+    })
+  }
+
+  const updateLogo = (field, value) => {
+    setSettings({
+      ...settings,
+      logos: { ...(settings.logos || {}), [field]: value },
+    })
+  }
+
+  const updatePageHero = (field, value) => {
+    setSettings({
+      ...settings,
+      pageHeroes: { ...(settings.pageHeroes || {}), [field]: value },
+    })
+  }
+
+  const updateAboutImage = (field, value) => {
+    setSettings({
+      ...settings,
+      aboutImages: { ...(settings.aboutImages || {}), [field]: value },
     })
   }
 
@@ -98,6 +120,84 @@ export default function SiteSettingsEditor() {
           </div>
         </div>
 
+        {/* Logos */}
+        <div className="rounded-xl border border-gray-700 bg-gray-800/50 p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-[#7296a2] tracking-wide">LOGOS</h3>
+          <p className="text-xs text-gray-500">Upload your brand logos. Light logo is used on dark backgrounds (homepage hero), dark logo on light backgrounds.</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ImageUploader
+              value={settings.logos?.light || ''}
+              onChange={(val) => updateLogo('light', val)}
+              label="Light Logo (for dark backgrounds)"
+              maxWidth={400}
+            />
+            <ImageUploader
+              value={settings.logos?.dark || ''}
+              onChange={(val) => updateLogo('dark', val)}
+              label="Dark Logo (for light backgrounds)"
+              maxWidth={400}
+            />
+          </div>
+        </div>
+
+        {/* Page Hero Images */}
+        <div className="rounded-xl border border-gray-700 bg-gray-800/50 p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-[#7296a2] tracking-wide">PAGE HERO IMAGES</h3>
+          <p className="text-xs text-gray-500">The full-screen banner images shown at the top of each page.</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ImageUploader
+              value={settings.pageHeroes?.about || ''}
+              onChange={(val) => updatePageHero('about', val)}
+              label="About Page Hero"
+              maxWidth={1920}
+            />
+            <ImageUploader
+              value={settings.pageHeroes?.contact || ''}
+              onChange={(val) => updatePageHero('contact', val)}
+              label="Contact Page Hero"
+              maxWidth={1920}
+            />
+            <ImageUploader
+              value={settings.pageHeroes?.packages || ''}
+              onChange={(val) => updatePageHero('packages', val)}
+              label="Packages Page Hero"
+              maxWidth={1920}
+            />
+            <ImageUploader
+              value={settings.pageHeroes?.portfolio || ''}
+              onChange={(val) => updatePageHero('portfolio', val)}
+              label="Portfolio Page Hero (fallback)"
+              maxWidth={1920}
+            />
+          </div>
+        </div>
+
+        {/* About Page Images */}
+        <div className="rounded-xl border border-gray-700 bg-gray-800/50 p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-[#7296a2] tracking-wide">ABOUT PAGE IMAGES</h3>
+          <p className="text-xs text-gray-500">The three collage photos shown on the About page.</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <ImageUploader
+              value={settings.aboutImages?.image1 || ''}
+              onChange={(val) => updateAboutImage('image1', val)}
+              label="Photo 1 (Top Left)"
+              maxWidth={800}
+            />
+            <ImageUploader
+              value={settings.aboutImages?.image2 || ''}
+              onChange={(val) => updateAboutImage('image2', val)}
+              label="Photo 2 (Middle Right)"
+              maxWidth={800}
+            />
+            <ImageUploader
+              value={settings.aboutImages?.image3 || ''}
+              onChange={(val) => updateAboutImage('image3', val)}
+              label="Photo 3 (Bottom Left)"
+              maxWidth={800}
+            />
+          </div>
+        </div>
+
         {/* Contact */}
         <div className="rounded-xl border border-gray-700 bg-gray-800/50 p-5 space-y-4">
           <h3 className="text-sm font-semibold text-[#7296a2] tracking-wide">CONTACT</h3>
@@ -137,6 +237,16 @@ export default function SiteSettingsEditor() {
               value={settings.formspreeEndpoint || ''}
               onChange={(e) => updateField('formspreeEndpoint', e.target.value)}
               className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Google Maps Embed URL</label>
+            <input
+              type="url"
+              value={settings.mapEmbedUrl || ''}
+              onChange={(e) => updateField('mapEmbedUrl', e.target.value)}
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
+              placeholder="https://www.google.com/maps/embed?pb=..."
             />
           </div>
         </div>

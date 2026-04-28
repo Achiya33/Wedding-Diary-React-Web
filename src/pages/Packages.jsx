@@ -6,7 +6,6 @@ import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
 import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { motion } from 'framer-motion'
-import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 import { sanitizePackagesForm } from '../utils/sanitize.js'
 
@@ -57,7 +56,7 @@ export default function Packages() {
      <>
     <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
       <img
-        src={asset("/images/pak/WDC02930.webp")}
+        src={site.pageHeroes?.packages}
         alt="Packages"
         className="absolute inset-0 h-full w-full object-cover"
       />

@@ -126,7 +126,7 @@ function ServicesSection({ services }) {
         {/* Know More link */}
         <div className={`mt-14 text-center scroll-animate scroll-animate-delay-3 ${visClass}`}>
           <a
-            href="/Contact"
+            href="/contact"
             className="text-[13px] font-semibold uppercase tracking-[0.2em] text-[#7296a2] transition hover:opacity-70"
           >
             Know More

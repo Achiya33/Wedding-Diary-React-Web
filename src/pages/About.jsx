@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { asset } from '../utils/assetPath.js'
+import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 
 
 export default function About() {
 usePageTitle('About Us')
+const { data: site } = useFirebaseContent('site')
 const sectionRef = useRef(null)
 const [showSection, setShowSection] = useState(false)
 
@@ -30,7 +31,7 @@ useEffect(() => {
     <>
     <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
       <img
-        src={asset("/images/pak/44.webp")}
+        src={site.pageHeroes?.about}
         alt="About Us"
         className="absolute inset-0 h-full w-full object-cover"
       />
@@ -53,7 +54,7 @@ useEffect(() => {
       <div className="relative mx-auto h-[420px] w-full max-w-[540px] animate-fade-up-soft sm:h-[520px] lg:h-[620px]">
         <div className="group absolute left-0 top-0 z-20 w-[62%] overflow-hidden bg-white p-2 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)] sm:p-3">
           <img
-            src={asset("/images/about/55.jpg")}
+            src={site.aboutImages?.image1}
             alt="Couple seated together"
             loading="lazy"
             className="h-[160px] w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-[230px]"
@@ -62,7 +63,7 @@ useEffect(() => {
 
         <div className="group absolute left-[44%] top-[120px] z-30 w-[44%] overflow-hidden bg-white p-2 shadow-[0_20px_45px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)] sm:top-[170px] sm:p-3">
           <img
-            src={asset("/images/about/4545.jpg")}
+            src={site.aboutImages?.image2}
             alt="Wedding portrait"
             loading="lazy"
             className="h-[190px] w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-[280px]"
@@ -71,7 +72,7 @@ useEffect(() => {
 
         <div className="group absolute left-[6%] top-[260px] z-10 w-[42%] overflow-hidden bg-white p-2 shadow-[0_20px_45px_rgba(0,0,0,0.06)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(0,0,0,0.14)] sm:top-[355px] sm:p-3">
           <img
-            src={asset("/images/about/555.jpg")}
+            src={site.aboutImages?.image3}
             alt="Indoor framed portrait"
             loading="lazy"
             className="h-[120px] w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-[170px]"
@@ -85,7 +86,7 @@ useEffect(() => {
 
           <div className="space-y-8 pt-2 text-[15px] leading-9 text-[#7d7d7d] md:text-[16px]">
             <p>
-              Let us tell you why we have the most magical and fulfilling job in the world. We are truly in love with love. Inspired by elegant couples, soft lighting, natural settings, and genuine emotions, we focus on capturing the real essence of your special day. At Wedding Diary, we don’t simply take photographs—we preserve feelings, fleeting moments, and meaningful connections, turning them into timeless visual stories you can cherish forever.
+              Let us tell you why we have the most magical and fulfilling job in the world. We are truly in love with love. Inspired by elegant couples, soft lighting, natural settings, and genuine emotions, we focus on capturing the real essence of your special day. At Wedding Diary, we don't simply take photographs—we preserve feelings, fleeting moments, and meaningful connections, turning them into timeless visual stories you can cherish forever.
             </p>
 
             <p>

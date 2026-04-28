@@ -5,7 +5,6 @@ import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
 import { useFirebaseContent } from '../utils/useFirebaseContent.js'
-import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 import { sanitizeContactForm } from '../utils/sanitize.js'
 
@@ -45,7 +44,7 @@ export default function Contact() {
     <>
       <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
         <img
-          src={asset("/images/pak/WDC09210.webp")}
+          src={site.pageHeroes?.contact}
           alt="Contact Us"
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -76,7 +75,7 @@ export default function Contact() {
               <div className="mt-8 overflow-hidden rounded-xl ring-1 ring-black/10">
                 <iframe
                   title="Wedding Diary Location"
-                  src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d15855.691464900581!2d80.134532!3d6.531426000000001!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae3d70219d3214b%3A0xf83fe654ec62209!2sWedding%20Diary%20Photography!5e0!3m2!1sen!2sus!4v1773714030733!5m2!1sen!2sus"
+                  src={site.mapEmbedUrl}
                   className="h-[260px] w-full border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"

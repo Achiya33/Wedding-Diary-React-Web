@@ -2,7 +2,6 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useFirebaseContent } from '../utils/useFirebaseContent.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
-import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 
 function AlbumCard({ item, index }) {
@@ -39,6 +38,8 @@ export default function Portfolio() {
   const [activeCategory, setActiveCategory] = React.useState('all')
   const { data: portfolioItems } = useFirebaseContent('portfolio')
 
+  const { data: site } = useFirebaseContent('site')
+
   // Generate categories dynamically from the portfolio items
   const dynamicCategories = React.useMemo(() => {
     if (!portfolioItems) return [{ value: 'all', label: 'ALL' }]
@@ -59,10 +60,10 @@ export default function Portfolio() {
       ? portfolioItems
       : portfolioItems.filter((item) => item.category === activeCategory)
 
-  // Use the cover of the first portfolio item as the hero image, or fallback to the default static image
+  // Use the cover of the first portfolio item as the hero image, or fallback to Firebase site setting
   const heroImage = portfolioItems && portfolioItems.length > 0 
     ? (portfolioItems[0].coverImage || portfolioItems[0].cover) 
-    : asset("/images/pak/DSC05262 (3).webp")
+    : site.pageHeroes?.portfolio
 
   return (
     <div>
