@@ -33,11 +33,7 @@ import {
   markAllReadInCloud,
   deleteFromCloud,
   deleteAllFromCloud,
-  getSubmissionEndpoint,
-  setSubmissionEndpoint,
-  testSubmissionEndpoint,
   getCachedSubmissions,
-  SUBMISSIONS_SCRIPT_CODE,
 } from '../utils/submissionDB.js'
 
 /* ── Field display config ─────────────────────────────────────── */
@@ -94,152 +90,6 @@ function timeSince(iso) {
   return formatDate(iso)
 }
 
-/* ── Database Setup Panel ────────────────────────────────────── */
-function DatabaseSetup({ onEndpointChange }) {
-  const [endpoint, setEndpoint] = useState(getSubmissionEndpoint())
-  const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState(null)
-  const [showScript, setShowScript] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [expanded, setExpanded] = useState(!endpoint)
-
-  const handleSave = () => {
-    setSubmissionEndpoint(endpoint)
-    setTestResult(null)
-    onEndpointChange?.()
-  }
-
-  const handleTest = async () => {
-    setTesting(true)
-    setTestResult(null)
-    const result = await testSubmissionEndpoint(endpoint)
-    setTestResult(result)
-    setTesting(false)
-  }
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(SUBMISSIONS_SCRIPT_CODE)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // Fallback
-      const ta = document.createElement('textarea')
-      ta.value = SUBMISSIONS_SCRIPT_CODE
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
-
-  return (
-    <div className="rounded-2xl border border-gray-800 bg-gray-900/60 overflow-hidden">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-3 px-5 py-4 text-left"
-      >
-        <Database className="h-5 w-5 text-[#7296a2]" />
-        <div className="flex-1">
-          <p className="text-sm font-medium text-white">Cloud Database</p>
-          <p className="text-[11px] text-gray-500">
-            {endpoint ? 'Google Sheets endpoint configured' : 'Not configured — submissions saved locally only'}
-          </p>
-        </div>
-        <Settings2 className={`h-4 w-4 text-gray-500 transition-transform ${expanded ? 'rotate-90' : ''}`} />
-      </button>
-
-      {expanded && (
-        <div className="border-t border-gray-800 px-5 pb-5 pt-4 space-y-4">
-          {/* Endpoint input */}
-          <div>
-            <label className="block text-xs font-medium text-gray-400 mb-2">
-              Google Apps Script Web App URL
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={endpoint}
-                onChange={(e) => setEndpoint(e.target.value)}
-                placeholder="https://script.google.com/macros/s/…/exec"
-                className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#7296a2] focus:outline-none"
-              />
-              <button
-                onClick={handleSave}
-                className="rounded-lg bg-[#7296a2] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#5a7d88]"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-
-          {/* Test & status */}
-          {endpoint && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleTest}
-                disabled={testing}
-                className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 transition hover:text-white disabled:opacity-50"
-              >
-                {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                Test Connection
-              </button>
-              {testResult && (
-                <span className={`text-xs ${testResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {testResult.success ? '✓ Connected!' : `✕ ${testResult.error}`}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Setup guide */}
-          <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
-            <p className="text-xs leading-relaxed text-gray-500">
-              <strong className="text-gray-400">Setup:</strong> Create a new Google Apps Script project,
-              paste the script code below, and deploy as a Web App (Execute as: "Me", Access: "Anyone").
-              The script uses a Google Sheet as a database to store all form submissions.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={() => setShowScript(!showScript)}
-                className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 transition hover:text-white"
-              >
-                {showScript ? 'Hide' : 'Show'} Script Code
-              </button>
-              <a
-                href="https://script.google.com/home"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 transition hover:text-white"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Open Apps Script
-              </a>
-            </div>
-          </div>
-
-          {/* Script code */}
-          {showScript && (
-            <div className="relative">
-              <button
-                onClick={handleCopy}
-                className="absolute right-3 top-3 flex items-center gap-1.5 rounded-lg bg-gray-700 px-3 py-1.5 text-xs text-gray-300 transition hover:bg-gray-600"
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-              <pre className="max-h-[300px] overflow-auto rounded-xl bg-gray-950 p-4 text-[11px] leading-relaxed text-gray-400 border border-gray-800">
-                {SUBMISSIONS_SCRIPT_CODE}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 /* ── Submission Card ──────────────────────────────────────────── */
 function SubmissionCard({ submission, onMarkRead, onDelete }) {
@@ -448,8 +298,7 @@ export default function FormSubmissions() {
 
   return (
     <div className="space-y-6">
-      {/* Database Setup */}
-      <DatabaseSetup onEndpointChange={loadSubmissions} />
+
 
       {/* Connection status bar */}
       <div className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3">
@@ -585,9 +434,8 @@ export default function FormSubmissions() {
       <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
         <p className="text-xs leading-relaxed text-gray-500">
           <strong className="text-gray-400">How it works:</strong> Every submission from the Contact
-          and Packages forms is saved to your Google Sheets database via Apps Script and also triggers an
-          email notification via Formspree. Configure your database endpoint above to view, manage,
-          and delete submissions from any device. Use the delete buttons to remove individual entries
+          and Packages forms is saved directly to your MongoDB database and triggers an
+          email notification to your phone. Use the delete buttons to remove individual entries
           or clear all submissions at once.
         </p>
       </div>

@@ -129,16 +129,16 @@ export default function PortfolioDetails() {
       {/* Lightbox */}
       {activeIndex !== null && (
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/92 p-4"
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 transition-all duration-300"
           onClick={() => setActiveIndex(null)}
         >
           {/* Close */}
           <button
             type="button"
             onClick={() => setActiveIndex(null)}
-            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20 sm:right-6 sm:top-6"
+            className="absolute right-4 top-4 z-10 p-3 text-white drop-shadow-md transition hover:scale-110 hover:text-white/70 sm:right-6 sm:top-6"
           >
-            <X size={22} />
+            <X size={28} />
           </button>
 
           {/* Prev */}
@@ -150,9 +150,9 @@ export default function PortfolioDetails() {
                 prev === 0 ? item.images.length - 1 : prev - 1
               )
             }}
-            className="absolute left-3 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20 sm:left-6"
+            className="absolute left-3 z-10 p-3 text-white drop-shadow-md transition hover:scale-110 hover:text-white/70 sm:left-6"
           >
-            <ChevronLeft size={26} />
+            <ChevronLeft size={36} />
           </button>
 
           {/* Image */}
@@ -160,7 +160,7 @@ export default function PortfolioDetails() {
             key={item.images[activeIndex]}
             src={item.images[activeIndex]}
             alt={`${item.title} large ${activeIndex + 1}`}
-            className="max-h-[90vh] max-w-[90vw] object-contain"
+            className="max-h-[90vh] max-w-[90vw] object-contain shadow-2xl drop-shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
 
@@ -173,9 +173,9 @@ export default function PortfolioDetails() {
                 prev === item.images.length - 1 ? 0 : prev + 1
               )
             }}
-            className="absolute right-3 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20 sm:right-6"
+            className="absolute right-3 z-10 p-3 text-white drop-shadow-md transition hover:scale-110 hover:text-white/70 sm:right-6"
           >
-            <ChevronRight size={26} />
+            <ChevronRight size={36} />
           </button>
 
           {/* Counter */}

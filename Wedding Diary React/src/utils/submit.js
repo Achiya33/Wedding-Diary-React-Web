@@ -9,16 +9,16 @@
  * localStorage is NOT used for submissions; the cloud DB is the single source of truth.
  */
 
-import { saveToCloud } from './submissionDB.js'
 import { sanitizeFormData, sanitizeString } from './sanitize.js'
+import { getCachedSubmissions, setCachedSubmissions } from './submissionDB.js'
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // ─── Submit Form ──────────────────────────────────────────────
 
 /**
- * Submit form data:
- *  1. Build a submission record
- *  2. Send to cloud database (Google Sheets)
- *  3. Send email via Formspree
+ * Submit form data to our new Node.js backend.
+ * The backend handles both saving to MongoDB and sending the email.
  */
 export async function submitToFormspree(endpoint, payload) {
   const { page, ...formData } = payload
@@ -38,46 +38,32 @@ export async function submitToFormspree(endpoint, payload) {
     referral: { maxLength: 200 },
   })
 
-  // Build the submission record with sanitized data
-  const submission = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    page: sanitizeString(page || 'Unknown', 50),
-    data: sanitizedFormData,
-    timestamp: new Date().toISOString(),
-    read: false,
-  }
+  try {
+    const res = await fetch(`${API_URL}/api/inquiries`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ page: sanitizeString(page || 'Unknown', 50), ...sanitizedFormData }),
+    })
 
-  // 1. Send to cloud database (fire-and-forget, don't block the user)
-  saveToCloud(submission).catch(() => {
-    // Cloud save failed silently — email notification is the safety net
-  })
-
-  // 2. Send email via Formspree
-  if (!endpoint || endpoint.includes('yourFormId')) {
-    throw new Error(
-      'Form endpoint is not configured. Update site.formspreeEndpoint in src/data/site.js'
-    )
-  }
-
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({ page: sanitizeString(page || 'Unknown', 50), ...sanitizedFormData }),
-  })
-
-  if (!res.ok) {
-    let msg = 'Failed to submit'
-    try {
-      const data = await res.json()
-      msg = data?.error || msg
-    } catch (_) {
-      // ignore
+    if (!res.ok) {
+      throw new Error(`Failed to submit with status: ${res.status}`);
     }
-    throw new Error(msg)
-  }
 
-  return true
+    const data = await res.json();
+    
+    // Optimistically add to local cache for Admin Panel
+    if (data.submission) {
+      const cache = getCachedSubmissions();
+      cache.unshift(data.submission);
+      setCachedSubmissions(cache);
+    }
+    
+    return true;
+  } catch (err) {
+    console.error('Submit error:', err);
+    throw new Error('Failed to submit. Please try again.');
+  }
 }

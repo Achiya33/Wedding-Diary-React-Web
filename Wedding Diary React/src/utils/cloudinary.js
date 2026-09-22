@@ -1,27 +1,27 @@
-export const CLOUDINARY_CONFIG = {
-  cloudName: "dzvh8wvip",
-  uploadPreset: "wedding_preset",
-  uploadUrl: "https://api.cloudinary.com/v1_1/dzvh8wvip/image/upload"
-};
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 import { sanitizeUrl } from './sanitize.js'
 
 export const handleImageUpload = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); 
+  // We no longer need upload_preset for our custom backend
 
   try {
-    const response = await fetch(CLOUDINARY_CONFIG.uploadUrl, {
+    const response = await fetch(`${API_URL}/api/upload`, {
       method: "POST",
       body: formData,
     });
-    
+
+    if (!response.ok) {
+      throw new Error(`Upload failed with status ${response.status}`);
+    }
+
     const data = await response.json();
-    // Sanitize the returned URL to prevent malicious redirects
+    // Return the secure url provided by our backend
     return data.secure_url ? sanitizeUrl(data.secure_url) : null;
   } catch (error) {
-    console.error("Cloudinary upload error:", error);
+    console.error("Backend upload error:", error);
     return null;
   }
 };
