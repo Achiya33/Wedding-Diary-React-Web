@@ -13,26 +13,34 @@ const __dirname = path.dirname(__filename)
 async function seed() {
   console.log('🌱 Starting Database Initialization and Seeding...')
 
-  const rootConn = await mysql.createConnection({
-    host: process.env.DB_HOST || '127.0.0.1',
-    port: parseInt(process.env.DB_PORT || '3306', 10),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-  })
-
+  const host = process.env.DB_HOST || '127.0.0.1'
+  const port = parseInt(process.env.DB_PORT || '3306', 10)
+  const user = process.env.DB_USER || 'wedding_user'
+  const password = process.env.DB_PASSWORD || 'WeddingPass2026!'
   const dbName = process.env.DB_NAME || 'wedding_diary'
-  await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`)
-  console.log(`✅ Database "${dbName}" verified.`)
-  await rootConn.end()
 
-  const db = await mysql.createConnection({
-    host: process.env.DB_HOST || '127.0.0.1',
-    port: parseInt(process.env.DB_PORT || '3306', 10),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: dbName,
-    multipleStatements: true,
-  })
+  // Wait / Retry loop for database container startup
+  let db = null
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    try {
+      db = await mysql.createConnection({
+        host,
+        port,
+        user,
+        password,
+        database: dbName,
+        multipleStatements: true,
+      })
+      console.log(`✅ Connected to database "${dbName}" on attempt ${attempt}.`)
+      break
+    } catch (err) {
+      if (attempt === 10) {
+        throw new Error(`Could not connect to database at ${host}:${port} after 10 attempts: ${err.message}`)
+      }
+      console.log(`⏳ Waiting for database (${host}:${port}) to be ready... (attempt ${attempt}/10)`)
+      await new Promise((r) => setTimeout(r, 3000))
+    }
+  }
 
   // Execute schema.sql
   const schemaPath = path.join(__dirname, '..', 'schema.sql')

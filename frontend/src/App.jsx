@@ -60,8 +60,13 @@ function PublicLayout() {
 }
 
 export default function App() {
+  const [, setSyncTick] = useState(0)
+
   useEffect(() => {
+    const handleSync = () => setSyncTick((t) => t + 1)
+    window.addEventListener('wd_content_sync', handleSync)
     syncWithBackend()
+    return () => window.removeEventListener('wd_content_sync', handleSync)
   }, [])
 
   return (

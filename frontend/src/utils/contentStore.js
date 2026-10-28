@@ -99,20 +99,25 @@ export function getContent(key) {
 export function setContent(key, data) {
   try {
     localStorage.setItem(PREFIX + key, JSON.stringify(data))
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('wd_content_sync'))
+    }
 
     // Asynchronously push update to Backend API
     if (api.isAuthenticated()) {
+      let syncPromise
       if (key === 'portfolio') {
-        api.savePortfolioBatch(data).catch((e) => console.warn('Failed to sync portfolio to DB:', e))
+        syncPromise = api.savePortfolioBatch(data)
       } else if (key === 'blogs') {
-        api.saveBlogsBatch(data).catch((e) => console.warn('Failed to sync blogs to DB:', e))
+        syncPromise = api.saveBlogsBatch(data)
       } else if (key === 'testimonials') {
-        api.saveTestimonials(data).catch((e) => console.warn('Failed to sync testimonials to DB:', e))
+        syncPromise = api.saveTestimonials(data)
       } else if (key === 'services') {
-        api.saveServices(data).catch((e) => console.warn('Failed to sync services to DB:', e))
+        syncPromise = api.saveServices(data)
       } else {
-        api.saveSetting(key, data).catch((e) => console.warn(`Failed to sync ${key} to DB:`, e))
+        syncPromise = api.saveSetting(key, data)
       }
+      syncPromise?.catch((e) => console.warn(`Failed to sync ${key} to DB:`, e))
     }
     return true
   } catch (e) {
