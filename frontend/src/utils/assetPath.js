@@ -3,7 +3,8 @@
  * on localhost, production servers, and GitHub Pages.
  */
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') // strip trailing slash
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000'
+const isLocalDev = typeof window !== 'undefined' && window.location.port === '5173'
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || (isLocalDev ? 'http://localhost:5000' : '')
 
 export function asset(path) {
   if (!path) return path

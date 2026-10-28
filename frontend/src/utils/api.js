@@ -2,8 +2,9 @@
  * Backend API Client for Wedding Diary
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-export const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000'
+const isLocalDev = typeof window !== 'undefined' && window.location.port === '5173'
+const API_BASE = import.meta.env.VITE_API_URL || (isLocalDev ? 'http://localhost:5000/api' : '/api')
+export const SERVER_URL = import.meta.env.VITE_SERVER_URL || (isLocalDev ? 'http://localhost:5000' : '')
 
 /**
  * Helper to resolve uploaded image paths
