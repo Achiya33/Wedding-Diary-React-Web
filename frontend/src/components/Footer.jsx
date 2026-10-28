@@ -88,7 +88,7 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
 
         <div className="mt-12 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-ink/60">
           <span>© {new Date().getFullYear()} {site.brand}. All rights reserved.</span>
-          <span></span>
+          <span className="tracking-wide">Maintained By <span className="font-semibold text-ink/85">TRONEXZ</span></span>
         </div>
       </div>
     </footer>
