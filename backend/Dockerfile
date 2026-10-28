@@ -2,12 +2,9 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install native dependencies for sharp
-RUN apk add --no-cache vips-dev
-
-# Install dependencies
+# Install production dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --production --legacy-peer-deps
 
 # Copy application source
 COPY . .
