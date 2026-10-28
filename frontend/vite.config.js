@@ -10,15 +10,13 @@ export default defineConfig(({ mode }) => ({
     // Smaller chunks = faster loading on slow connections
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core React runtime — cached long-term
-          'vendor-react': ['react', 'react-dom'],
-          // Router — separate chunk
-          'vendor-router': ['react-router-dom'],
-          // Icons — large library, isolated
-          'vendor-icons': ['lucide-react'],
-          // Animation library — only needed on public pages
-          'vendor-motion': ['framer-motion'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react'
+            if (id.includes('react-router-dom')) return 'vendor-router'
+            if (id.includes('lucide-react')) return 'vendor-icons'
+            if (id.includes('framer-motion')) return 'vendor-motion'
+          }
         },
       },
     },
