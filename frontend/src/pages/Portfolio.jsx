@@ -1,8 +1,17 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useFirebaseContent } from '../utils/useFirebaseContent.js'
+import { getContent } from '../utils/contentStore.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
+import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
+
+const categories = [
+  { value: 'all', label: 'ALL' },
+  { value: 'Wedding', label: 'WEDDINGS' },
+  { value: 'Engagement', label: 'ENGAGEMENTS' },
+  { value: 'Pre Wedding', label: 'PRE WEDDING SHOOTS' },
+  { value: 'Homecoming', label: 'HOMECOMINGS' },
+]
 
 function AlbumCard({ item, index }) {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 })
@@ -15,7 +24,7 @@ function AlbumCard({ item, index }) {
       className={`group relative block h-[420px] overflow-hidden sm:h-[470px] lg:h-[520px] scroll-animate scroll-animate-delay-${(index % 3) + 1} ${visClass}`}
     >
       <img
-        src={item.coverImage || item.cover}
+        src={asset(item.coverImage || item.cover)}
         alt={item.title}
         className="h-full w-full object-cover transition duration-[1200ms] ease-out group-hover:scale-110"
         loading="lazy"
@@ -36,65 +45,44 @@ function AlbumCard({ item, index }) {
 export default function Portfolio() {
   usePageTitle('Portfolio')
   const [activeCategory, setActiveCategory] = React.useState('all')
-  const { data: portfolioItems } = useFirebaseContent('portfolio')
-
-  const { data: site } = useFirebaseContent('site')
-
-  // Generate categories dynamically from the portfolio items
-  const dynamicCategories = React.useMemo(() => {
-    if (!portfolioItems) return [{ value: 'all', label: 'ALL' }]
-    
-    const cats = new Set()
-    portfolioItems.forEach((item) => {
-      if (item.category) cats.add(item.category)
-    })
-    
-    return [
-      { value: 'all', label: 'ALL' },
-      ...Array.from(cats).map((cat) => ({ value: cat, label: cat.toUpperCase() }))
-    ]
-  }, [portfolioItems])
+  const portfolioItems = getContent('portfolio')
 
   const filtered =
     activeCategory === 'all'
       ? portfolioItems
       : portfolioItems.filter((item) => item.category === activeCategory)
 
-  // Use the cover of the first portfolio item as the hero image, or fallback to Firebase site setting
-  const heroImage = portfolioItems && portfolioItems.length > 0 
-    ? (portfolioItems[0].coverImage || portfolioItems[0].cover) 
-    : site.pageHeroes?.portfolio
-
   return (
     <div>
       {/* Hero Section */}
       <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
-        <img
-          src={heroImage}
-          alt="Portfolio"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="relative z-10 flex h-full items-center justify-center">
-          <h1 className="text-5xl font-semibold text-white sm:text-6xl lg:text-7xl animate-fade-up">
-            Portfolio
-          </h1>
-        </div>
-      </section>
+      <img
+        src={asset("/images/pak/44.webp")}
+        alt="About Us"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="relative z-10 flex h-full items-center justify-center">
+        <h1 className="text-5xl font-semibold text-white sm:text-6xl lg:text-7xl animate-fade-up">
+          Portfolio
+        </h1>
+      </div>
+    </section>
 
       {/* Category Tabs */}
       <section className="border-b border-black/10 bg-white">
         <div className="mx-auto max-w-[1200px] px-6">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 py-6">
-            {dynamicCategories.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.value}
                 type="button"
                 onClick={() => setActiveCategory(cat.value)}
-                className={`text-[13px] tracking-[0.14em] transition duration-300 ${activeCategory === cat.value
-                  ? 'text-[#7296a2] font-medium border-b-2 border-[#7296a2] pb-1'
-                  : 'text-[#999] hover:text-[#666] pb-1 border-b-2 border-transparent'
-                  }`}
+                className={`text-[13px] tracking-[0.14em] transition duration-300 ${
+                  activeCategory === cat.value
+                    ? 'text-[#7296a2] font-medium border-b-2 border-[#7296a2] pb-1'
+                    : 'text-[#999] hover:text-[#666] pb-1 border-b-2 border-transparent'
+                }`}
               >
                 {cat.label}
               </button>

@@ -4,14 +4,14 @@ import SectionHeading from '../components/SectionHeading.jsx'
 import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { submitToFormspree } from '../utils/submit.js'
-import { useFirebaseContent } from '../utils/useFirebaseContent.js'
+import { getContent } from '../utils/contentStore.js'
 import { motion } from 'framer-motion'
+import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
-import { sanitizePackagesForm } from '../utils/sanitize.js'
 
 export default function Packages() {
   usePageTitle('Packages')
-  const { data: site } = useFirebaseContent('site')
+  const site = getContent('site')
   const [form, setForm] = React.useState({
     groomName: '',
     brideName: '',
@@ -34,13 +34,10 @@ export default function Packages() {
     e.preventDefault()
     setStatus({ state: 'loading', message: '' })
 
-    // Sanitize form data before submission
-    const sanitizedForm = sanitizePackagesForm(form)
-
     try {
       await submitToFormspree(site.formspreeEndpoint, {
         page: 'Packages',
-        ...sanitizedForm,
+        ...form,
       })
       setStatus({ state: 'success', message: 'Submitted! We will contact you soon.' })
       setForm((f) => ({ ...f, message: '' }))
@@ -56,7 +53,7 @@ export default function Packages() {
      <>
     <section className="relative h-[100vh] min-h-[420px] w-full overflow-hidden">
       <img
-        src={site.pageHeroes?.packages}
+        src={asset("/images/pak/WDC02930.webp")}
         alt="Packages"
         className="absolute inset-0 h-full w-full object-cover"
       />

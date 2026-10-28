@@ -1,8 +1,9 @@
 import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Calendar, ArrowRight } from 'lucide-react'
-import { useFirebaseContent } from '../utils/useFirebaseContent.js'
+import { getContent } from '../utils/contentStore.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
+import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 
 /* ── Blog listing page ── */
@@ -15,7 +16,7 @@ function BlogCard({ post, index, visClass }) {
       {/* Image */}
       <div className="relative overflow-hidden aspect-[4/3]">
         <img
-          src={post.image}
+          src={asset(post.image || post.coverImage)}
           alt={post.title}
           loading="lazy"
           className="h-full w-full object-cover transition duration-[800ms] ease-out group-hover:scale-110"
@@ -53,8 +54,6 @@ function BlogListPage() {
   const heroClass = heroVis ? 'is-visible' : ''
   const gridClass = gridVis ? 'is-visible' : ''
 
-  const { data: blogs } = useFirebaseContent('blogs')
-
   return (
     <div>
       {/* Dark hero banner */}
@@ -79,7 +78,7 @@ function BlogListPage() {
       <section ref={gridRef} className="bg-[#f7f7f5] py-16 sm:py-20">
         <div className="mx-auto max-w-[1100px] px-6">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-            {(blogs || []).map((post, i) => (
+            {getContent('blogs').map((post, i) => (
               <BlogCard key={post.slug} post={post} index={i} visClass={gridClass} />
             ))}
           </div>
@@ -91,7 +90,8 @@ function BlogListPage() {
 
 /* ── Content renderer – handles headers, bullets, numbered lists ── */
 function renderBlogContent(content) {
-  const blocks = content.split('\n\n')
+  const textContent = Array.isArray(content) ? content.join('\n\n') : String(content || '')
+  const blocks = textContent.split('\n\n')
   const elements = []
 
   blocks.forEach((block, i) => {
@@ -172,7 +172,7 @@ function BlogDetailPage({ post }) {
       {/* Hero image */}
       <section className="relative min-h-[400px] sm:min-h-[480px]">
         <img
-          src={post.image}
+          src={asset(post.image || post.coverImage)}
           alt={post.title}
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -222,10 +222,9 @@ function BlogDetailPage({ post }) {
 /* ── Router wrapper ── */
 export default function Blog() {
   const { slug } = useParams()
-  const { data: blogs } = useFirebaseContent('blogs')
 
   if (slug) {
-    const post = (blogs || []).find((p) => p.slug === slug)
+    const post = getContent('blogs').find((p) => p.slug === slug)
     if (!post) {
       return (
         <div className="flex min-h-screen items-center justify-center pt-24">

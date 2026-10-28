@@ -1,4 +1,36 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Production builds
+dist/
+dist-ssr/
+*.local
+
+# Environment files
 .env
+.env.*
+server/.env
+server/.env.*
+!.env.example
+!server/.env.example
+
+# Server Uploads
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# OS & Editor junk
 .DS_Store
+._*
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

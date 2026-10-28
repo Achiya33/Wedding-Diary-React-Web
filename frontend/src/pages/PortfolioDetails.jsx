@@ -1,8 +1,9 @@
 import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useFirebaseContent } from '../utils/useFirebaseContent.js'
+import { getContent } from '../utils/contentStore.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
+import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 
 function AlbumPhoto({ src, alt, index, onClick }) {
@@ -18,7 +19,7 @@ function AlbumPhoto({ src, alt, index, onClick }) {
       className={`group block w-full overflow-hidden scroll-animate ${delayClass} ${visClass}`}
     >
       <img
-        src={src}
+        src={asset(src)}
         alt={alt}
         className="w-full object-cover transition duration-700 ease-out group-hover:scale-[1.04] group-hover:brightness-95"
         loading="lazy"
@@ -29,7 +30,7 @@ function AlbumPhoto({ src, alt, index, onClick }) {
 
 export default function PortfolioDetails() {
   const { slug } = useParams()
-  const { data: portfolioItems } = useFirebaseContent('portfolio')
+  const portfolioItems = getContent('portfolio')
   const item = portfolioItems.find((p) => p.slug === slug)
   const [activeIndex, setActiveIndex] = React.useState(null)
   usePageTitle(item ? item.title : 'Portfolio')
@@ -72,7 +73,7 @@ export default function PortfolioDetails() {
       <section className="relative">
         <div className="relative flex h-[50vh] min-h-[360px] items-center justify-center overflow-hidden bg-black sm:h-[55vh] sm:min-h-[420px]">
           <img
-            src={item.coverImage}
+            src={asset(item.coverImage)}
             alt={item.title}
             className="absolute inset-0 h-full w-full object-cover opacity-55"
           />
@@ -129,16 +130,16 @@ export default function PortfolioDetails() {
       {/* Lightbox */}
       {activeIndex !== null && (
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 transition-all duration-300"
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/92 p-4"
           onClick={() => setActiveIndex(null)}
         >
           {/* Close */}
           <button
             type="button"
             onClick={() => setActiveIndex(null)}
-            className="absolute right-4 top-4 z-10 p-3 text-white drop-shadow-md transition hover:scale-110 hover:text-white/70 sm:right-6 sm:top-6"
+            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20 sm:right-6 sm:top-6"
           >
-            <X size={28} />
+            <X size={22} />
           </button>
 
           {/* Prev */}
@@ -150,17 +151,17 @@ export default function PortfolioDetails() {
                 prev === 0 ? item.images.length - 1 : prev - 1
               )
             }}
-            className="absolute left-3 z-10 p-3 text-white drop-shadow-md transition hover:scale-110 hover:text-white/70 sm:left-6"
+            className="absolute left-3 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20 sm:left-6"
           >
-            <ChevronLeft size={36} />
+            <ChevronLeft size={26} />
           </button>
 
           {/* Image */}
           <img
             key={item.images[activeIndex]}
-            src={item.images[activeIndex]}
+            src={asset(item.images[activeIndex])}
             alt={`${item.title} large ${activeIndex + 1}`}
-            className="max-h-[90vh] max-w-[90vw] object-contain shadow-2xl drop-shadow-2xl"
+            className="max-h-[90vh] max-w-[90vw] object-contain"
             onClick={(e) => e.stopPropagation()}
           />
 
@@ -173,9 +174,9 @@ export default function PortfolioDetails() {
                 prev === item.images.length - 1 ? 0 : prev + 1
               )
             }}
-            className="absolute right-3 z-10 p-3 text-white drop-shadow-md transition hover:scale-110 hover:text-white/70 sm:right-6"
+            className="absolute right-3 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20 sm:right-6"
           >
-            <ChevronRight size={36} />
+            <ChevronRight size={26} />
           </button>
 
           {/* Counter */}

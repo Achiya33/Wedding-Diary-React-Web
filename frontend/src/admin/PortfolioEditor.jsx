@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Plus, Trash2, Save, ChevronDown, ChevronUp, Images, Upload, X, GripVertical, Zap, ImagePlus } from 'lucide-react'
-import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
+import { getContent, setContent } from '../utils/contentStore.js'
 import { generateId, compressImage, compressionRatio, formatFileSize } from '../utils/imageUtils.js'
 import ImageUploader from './ImageUploader.jsx'
-import { handleImageUpload } from '../utils/cloudinary.js'
-import { sanitizePortfolioItem, sanitizeSlug } from '../utils/sanitize.js'
+import { api } from '../utils/api.js'
+import { asset } from '../utils/assetPath.js'
 
 const CATEGORIES = ['Wedding', 'Engagement', 'Pre Wedding', 'Homecoming']
 
@@ -17,7 +17,7 @@ function MultiPhotoUploader({ onPhotosAdded }) {
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState({ current: 0, total: 0 })
   const [quality, setQuality] = useState(65)
-  const [results, setResults] = useState(null)
+  const [results, setResults] = useState(null) // summary after batch
 
   const processFiles = async (files) => {
     const imageFiles = Array.from(files).filter((f) => f.type.startsWith('image/'))
@@ -25,31 +25,66 @@ function MultiPhotoUploader({ onPhotosAdded }) {
 
     setProcessing(true)
     setProgress({ current: 0, total: imageFiles.length })
+    setResults(null)
 
+    // 1. Try batch upload to Node.js Backend with Sharp WebP
+    if (api.isAuthenticated()) {
+      try {
+        const uploadRes = await api.uploadMultipleImages(imageFiles)
+        if (uploadRes?.files && uploadRes.files.length > 0) {
+          const urls = uploadRes.files.map((f) => f.url)
+          onPhotosAdded(urls)
+          setResults({
+            count: urls.length,
+            failed: imageFiles.length - urls.length,
+            totalOriginal: imageFiles.reduce((acc, f) => acc + f.size, 0),
+            totalCompressed: Math.round(imageFiles.reduce((acc, f) => acc + f.size, 0) * 0.25),
+            ratio: '75% (WebP Server)',
+          })
+          setProcessing(false)
+          setTimeout(() => setResults(null), 5000)
+          return
+        }
+      } catch (backendErr) {
+        console.warn('Backend batch upload failed, falling back to local compression:', backendErr)
+      }
+    }
+
+    // 2. Fallback to client-side compression
     const newImages = []
+    let totalOriginal = 0
+    let totalCompressed = 0
 
     for (let i = 0; i < imageFiles.length; i++) {
       setProgress({ current: i + 1, total: imageFiles.length })
       try {
-
-        const imageUrl = await handleImageUpload(imageFiles[i]);
-        if (imageUrl) {
-          newImages.push(imageUrl);
-        }
+        const result = await compressImage(imageFiles[i], 1200, quality / 100)
+        newImages.push(result.dataUrl)
+        totalOriginal += result.originalSize
+        totalCompressed += result.compressedSize
       } catch (err) {
-        console.error('Upload failed:', imageFiles[i].name, err)
+        console.error('Failed to process:', imageFiles[i].name, err)
       }
     }
 
     if (newImages.length > 0) {
-      onPhotosAdded(newImages);
+      onPhotosAdded(newImages)
+      setResults({
+        count: newImages.length,
+        failed: imageFiles.length - newImages.length,
+        totalOriginal,
+        totalCompressed,
+        ratio: compressionRatio(totalOriginal, totalCompressed),
+      })
     }
-    setProcessing(false);
-  };
+    setProcessing(false)
+    // Clear results after 5 seconds
+    setTimeout(() => setResults(null), 5000)
+  }
 
   const handleFileChange = (e) => {
     processFiles(e.target.files)
-    e.target.value = ''
+    e.target.value = '' // reset so same files can be re-selected
   }
 
   const handleDrop = (e) => {
@@ -60,62 +95,6 @@ function MultiPhotoUploader({ onPhotosAdded }) {
   }
 
   const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
-
-  const AdminGallery = () => {
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [title, setTitle] = useState("");
-    const [uploading, setUploading] = useState(false);
-
-    const handleAddGalleryItem = async (newImageFile, title) => {
-      setUploading(true);
-      try {
-
-        const compressedFile = await compressImageSimple(newImageFile, 1200, 0.7);
-
-
-        const imageUrl = await handleImageUpload(compressedFile);
-
-        if (imageUrl) {
-
-          const currentPortfolio = getContent('portfolio');
-
-          const newItem = {
-            id: Date.now().toString(),
-            url: imageUrl,
-            title: title || "New Wedding Shoot",
-            date: new Date().toISOString()
-          };
-
-          const updatedPortfolio = [newItem, ...currentPortfolio];
-          await setContent('portfolio', updatedPortfolio);
-
-          alert("පින්තූරය සාර්ථකව Gallery එකට එකතු වුණා! 🚀");
-          setSelectedFile(null);
-          setTitle("");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("අසාර්ථකයි!");
-      } finally {
-        setUploading(false);
-      }
-    };
-
-    return (
-      <div>
-        {/* ii*/}
-        <input type="file" onChange={(e) => setSelectedFile(e.target.files)} />
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
-
-        <button
-          onClick={() => handleAddGalleryItem(selectedFile, title)}
-          disabled={uploading}
-        >
-          {uploading ? "Uploading..." : "Add to Gallery"}
-        </button>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-2">
@@ -139,10 +118,11 @@ function MultiPhotoUploader({ onPhotosAdded }) {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => !processing && fileRef.current?.click()}
-        className={`relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 transition ${dragOver
-          ? 'border-[#7296a2] bg-[#7296a2]/10'
-          : 'border-gray-600 bg-gray-800/50 hover:border-[#7296a2] hover:bg-gray-800'
-          } ${processing ? 'pointer-events-none' : ''}`}
+        className={`relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 transition ${
+          dragOver
+            ? 'border-[#7296a2] bg-[#7296a2]/10'
+            : 'border-gray-600 bg-gray-800/50 hover:border-[#7296a2] hover:bg-gray-800'
+        } ${processing ? 'pointer-events-none' : ''}`}
       >
         {processing ? (
           <div className="flex flex-col items-center gap-3 w-full">
@@ -251,16 +231,17 @@ function GalleryGrid({ images, onReorder, onDelete, onUpdate }) {
           onDragOver={(e) => handleDragOver(e, index)}
           onDrop={(e) => handleDrop(e, index)}
           onDragEnd={handleDragEnd}
-          className={`group relative aspect-square rounded-lg overflow-hidden border transition-all cursor-grab active:cursor-grabbing ${dragIndex === index
-            ? 'opacity-40 scale-95 border-[#7296a2]'
-            : dragOverIndex === index
+          className={`group relative aspect-square rounded-lg overflow-hidden border transition-all cursor-grab active:cursor-grabbing ${
+            dragIndex === index
+              ? 'opacity-40 scale-95 border-[#7296a2]'
+              : dragOverIndex === index
               ? 'border-[#7296a2] ring-2 ring-[#7296a2]/30 scale-105'
               : 'border-gray-700 hover:border-gray-500'
-            }`}
+          }`}
         >
           {img ? (
             <img
-              src={img}
+              src={asset(img)}
               alt={`Gallery ${index + 1}`}
               className="h-full w-full object-cover"
               onError={(e) => {
@@ -330,7 +311,7 @@ function PortfolioItemEditor({ item, onChange, onDelete, isOpen, onToggle }) {
         <div className="flex items-center gap-4">
           {item.coverImage && (
             <img
-              src={item.coverImage}
+              src={asset(item.coverImage)}
               alt=""
               className="h-12 w-12 rounded-lg object-cover"
               onError={(e) => { e.target.style.display = 'none' }}
@@ -532,30 +513,15 @@ export default function PortfolioEditor() {
   const [items, setItems] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
   const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setItems(getContent('portfolio') || [])
-    const unsub = subscribeToContent('portfolio', (data) => {
-      if (data) setItems(data)
-    })
-    return unsub
   }, [])
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      // Sanitize all portfolio items before saving
-      const sanitizedItems = items.map(sanitizePortfolioItem)
-      await setContent('portfolio', sanitizedItems)
-      setItems(sanitizedItems)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch (err) {
-      alert('Failed to save: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
+  const handleSave = () => {
+    setContent('portfolio', items)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   const addItem = () => {
@@ -604,10 +570,11 @@ export default function PortfolioEditor() {
         </div>
         <button
           onClick={handleSave}
-          className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition ${saved
-            ? 'bg-green-600 text-white'
-            : 'bg-[#7296a2] text-white hover:bg-[#5a7d88]'
-            }`}
+          className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition ${
+            saved
+              ? 'bg-green-600 text-white'
+              : 'bg-[#7296a2] text-white hover:bg-[#5a7d88]'
+          }`}
         >
           <Save className="h-4 w-4" />
           {saved ? 'Saved!' : 'Save Changes'}

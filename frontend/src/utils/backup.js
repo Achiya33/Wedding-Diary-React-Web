@@ -5,7 +5,6 @@
 
 import { exportAllContent } from './contentStore.js'
 import { getCachedSubmissions } from './submissionDB.js'
-import { sanitizeEndpointUrl } from './sanitize.js'
 
 const SETTINGS_KEY = 'wd_backup_settings'
 const HISTORY_KEY = 'wd_backup_history'
@@ -46,12 +45,7 @@ export function getBackupSettings() {
 }
 
 export function saveBackupSettings(settings) {
-  // Sanitize endpoint URL before saving
-  const sanitized = {
-    ...settings,
-    endpoint: settings.endpoint ? sanitizeEndpointUrl(settings.endpoint) : '',
-  }
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(sanitized))
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
 }
 
 // ─── History ──────────────────────────────────────────────────

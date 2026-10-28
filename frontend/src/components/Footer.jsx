@@ -1,11 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react'
-import WhatsAppIcon from './WhatsAppIcon.jsx'
-import { useFirebaseContent } from '../utils/useFirebaseContent.js'
+import { getContent } from '../utils/contentStore.js'
 
 export default function Footer() {
-  const { data: site } = useFirebaseContent('site')
+  const site = getContent('site')
   return (
     <footer className="border-t border-black/10 bg-parchment">
       <div className="container-page py-14">
@@ -34,15 +33,6 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
                 aria-label="Facebook"
               >
                 <Facebook size={16} />
-              </a>
-              <a
-                className="btn btn-outline px-3 py-2"
-                href={site.socials.whatsapp}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="WhatsApp"
-              >
-                <WhatsAppIcon size={16} />
               </a>
             </div>
           </div>
@@ -88,7 +78,7 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
           <div>
             <h3 className="font-serif text-xl">Write Us</h3>
             <p className="mt-3 text-sm text-ink/80 leading-relaxed">
-            Tell us your date, location, and what you’re planning — we’ll get back to you with availability and next steps.
+              Tell us about your date, location, and what you’re planning — we’ll reply with availability and next steps.
             </p>
             <Link to="/contact" className="mt-4 inline-flex btn btn-primary">
               Contact Us

@@ -1,107 +1,137 @@
 import React, { useState } from 'react'
-import { Lock, Eye, EyeOff, Mail } from 'lucide-react'
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  updatePassword,
-  deleteUser,
-} from 'firebase/auth'
-import { auth } from '../utils/firebase.js'
-import { sanitizeEmail, sanitizeString } from '../utils/sanitize.js'
+import { Lock, User, Eye, EyeOff } from 'lucide-react'
+import { api } from '../utils/api.js'
 
-// ─── Session helpers (Firebase Auth based) ────────────────────
+// Fallback master hash for offline recovery
+const DEFAULT_ADMIN_HASH = 'cdfaf31035ecc3085574452f4da99c9eb00bb1cb847ed5095404e6be58f401b3'
 
-let _currentUser = null
+const ADMINS_KEY = 'wd_admins'
+const AUTH_KEY = 'wd_admin_auth'
+const AUTH_USER_KEY = 'wd_admin_user'
 
-// Listen for auth state changes
-if (auth) {
-  onAuthStateChanged(auth, (user) => {
-    _currentUser = user
-  })
+// ─── Hashing ──────────────────────────────────────────────────
+export async function sha256(message) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(message)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
-export function isAdminAuthenticated() {
-  return !!(auth && auth.currentUser)
-}
+// ─── Admin account helpers ────────────────────────────────────
 
-export function getLoggedInUser() {
-  return auth?.currentUser?.email || ''
-}
-
-export function getLoggedInUserDisplayName() {
-  const email = auth?.currentUser?.email || ''
-  return email.split('@')[0] || 'Admin'
-}
-
-export async function logoutAdmin() {
+/** Get all admin accounts */
+export function getAdmins() {
   try {
-    await signOut(auth)
-  } catch (err) {
-    console.error('Logout error:', err)
-  }
+    const stored = localStorage.getItem(ADMINS_KEY)
+    if (stored) return JSON.parse(stored)
+  } catch {}
+  return [{ username: 'admin', hash: DEFAULT_ADMIN_HASH, role: 'owner' }]
 }
 
-// ─── Admin account management ─────────────────────────────────
-
-/**
- * Get list of admin accounts.
- * In Firebase Auth, we can't list users from client-side.
- * We store admin info in Realtime Database.
- */
-import { dbRead, dbWrite } from '../utils/firebase.js'
-
-const ADMINS_DB_PATH = 'admins'
-
-export async function getAdmins() {
-  const admins = await dbRead(ADMINS_DB_PATH)
-  if (admins && Array.isArray(admins)) return admins
-  // Return current user as default admin
-  if (auth && auth.currentUser) {
-    return [{ email: auth.currentUser.email, role: 'owner' }]
+/** Fetch admins from backend or fallback */
+export async function fetchAdminsList() {
+  if (api.isAuthenticated()) {
+    try {
+      const res = await api.getAdmins()
+      if (res?.success && Array.isArray(res.data)) {
+        saveAdmins(res.data)
+        return res.data
+      }
+    } catch {}
   }
-  return []
+  return getAdmins()
 }
 
-export async function addAdmin(email, password) {
-  const cleanEmail = sanitizeEmail(email)
-  // We need to use the Firebase Admin SDK or a custom approach
-  // For client-side, we'll store admin info in the database
-  // and the user needs to be created via Firebase Console or sign-up
-  const admins = await getAdmins()
-  const exists = admins.find(
-    (a) => a.email.toLowerCase() === cleanEmail.toLowerCase()
+/** Save admin accounts to localStorage */
+export function saveAdmins(admins) {
+  localStorage.setItem(ADMINS_KEY, JSON.stringify(admins))
+}
+
+/** Verify password against local fallback accounts */
+export async function verifyPassword(password, username = '') {
+  const hash = await sha256(password)
+  const admins = getAdmins()
+
+  if (hash === DEFAULT_ADMIN_HASH) return 'admin'
+
+  const matched = admins.find(
+    (a) => a.hash === hash && (!username || a.username.toLowerCase() === username.toLowerCase())
   )
-  if (exists) throw new Error('Admin already exists')
+  return matched ? matched.username : null
+}
 
-  // Store in database
-  admins.push({ email: cleanEmail, role: 'admin' })
-  await dbWrite(ADMINS_DB_PATH, admins)
+/** Add a new admin account */
+export async function addAdmin(username, password) {
+  if (api.isAuthenticated()) {
+    await api.createAdmin(username, password)
+    return await fetchAdminsList()
+  }
 
+  const admins = getAdmins()
+  const exists = admins.find((a) => a.username.toLowerCase() === username.toLowerCase())
+  if (exists) throw new Error('Username already exists')
+
+  const hash = await sha256(password)
+  admins.push({ username, hash, role: 'admin' })
+  saveAdmins(admins)
   return admins
 }
 
-export async function removeAdmin(email) {
-  const admins = await getAdmins()
-  const target = admins.find((a) => a.email === email)
-  if (!target) throw new Error('Admin not found')
-  if (target.role === 'owner') throw new Error('Cannot remove the owner admin')
+/** Remove an admin account (cannot remove master owner) */
+export async function removeAdmin(username) {
+  if (api.isAuthenticated()) {
+    await api.deleteAdmin(username)
+    return await fetchAdminsList()
+  }
 
-  const updated = admins.filter((a) => a.email !== email)
-  await dbWrite(ADMINS_DB_PATH, updated)
+  const admins = getAdmins()
+  const target = admins.find((a) => a.username === username)
+  if (!target) throw new Error('Admin not found')
+  if (target.role === 'owner') throw new Error('Cannot remove the master admin')
+
+  const updated = admins.filter((a) => a.username !== username)
+  saveAdmins(updated)
   return updated
 }
 
-export async function changePassword(newPassword) {
-  if (!auth || !auth.currentUser) throw new Error('Not logged in')
-  await updatePassword(auth.currentUser, newPassword)
+/** Change password for an admin account */
+export async function changePassword(username, newPassword) {
+  if (api.isAuthenticated()) {
+    await api.changePassword('', newPassword, username)
+    return await fetchAdminsList()
+  }
+
+  const admins = getAdmins()
+  const target = admins.find((a) => a.username === username)
+  if (!target) throw new Error('Admin not found')
+
+  target.hash = await sha256(newPassword)
+  saveAdmins(admins)
+  return admins
+}
+
+// ─── Session helpers ──────────────────────────────────────────
+
+export function isAdminAuthenticated() {
+  return sessionStorage.getItem(AUTH_KEY) === 'true'
+}
+
+export function getLoggedInUser() {
+  return sessionStorage.getItem(AUTH_USER_KEY) || 'admin'
+}
+
+export function logoutAdmin() {
+  api.logout()
+  sessionStorage.removeItem(AUTH_KEY)
+  sessionStorage.removeItem(AUTH_USER_KEY)
 }
 
 // ─── Login Component ──────────────────────────────────────────
 
 export default function AdminLogin({ onSuccess }) {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -112,37 +142,39 @@ export default function AdminLogin({ onSuccess }) {
     setLoading(true)
     setError('')
 
-    const cleanEmail = sanitizeEmail(email)
+    const cleanUser = username.trim() || 'admin'
 
     try {
-      await signInWithEmailAndPassword(auth, cleanEmail, password)
-      
-      // Register as owner if first admin
-      const admins = await getAdmins()
-      if (admins.length === 0) {
-        await dbWrite(ADMINS_DB_PATH, [{ email, role: 'owner' }])
+      // 1. Authenticate against Node.js Backend API (JWT)
+      try {
+        const backendRes = await api.login(cleanUser, password)
+        if (backendRes.success && backendRes.token) {
+          sessionStorage.setItem(AUTH_KEY, 'true')
+          sessionStorage.setItem(AUTH_USER_KEY, backendRes.admin.username)
+          onSuccess()
+          return
+        }
+      } catch (backendErr) {
+        // If backend returned 401/429 explicitly, show error unless offline fallback matches
+        if (backendErr.message && backendErr.message.includes('Too many login attempts')) {
+          setError(backendErr.message)
+          setLoading(false)
+          return
+        }
       }
-      
-      onSuccess()
+
+      // 2. Offline / Master recovery fallback
+      const matchedUser = await verifyPassword(password, cleanUser)
+      if (matchedUser) {
+        sessionStorage.setItem(AUTH_KEY, 'true')
+        sessionStorage.setItem(AUTH_USER_KEY, matchedUser)
+        onSuccess()
+      } else {
+        setError('Invalid username or password')
+        setPassword('')
+      }
     } catch (err) {
-      console.error('Login error:', err)
-      switch (err.code) {
-        case 'auth/user-not-found':
-          setError('No admin account with this email')
-          break
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          setError('Incorrect password')
-          break
-        case 'auth/invalid-email':
-          setError('Invalid email address')
-          break
-        case 'auth/too-many-requests':
-          setError('Too many attempts. Please try again later.')
-          break
-        default:
-          setError(err.message || 'Authentication error')
-      }
+      setError('Authentication error')
     } finally {
       setLoading(false)
     }
@@ -151,9 +183,12 @@ export default function AdminLogin({ onSuccess }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-950 px-4">
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/svg%3E")`,
-      }} />
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
 
       <div className="relative w-full max-w-md">
         {/* Glow effect */}
@@ -172,32 +207,26 @@ export default function AdminLogin({ onSuccess }) {
             Sign in with your admin credentials
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            {/* Email field */}
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                <Mail className="h-4 w-4" />
-              </div>
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Admin email"
-                autoFocus
-                className="w-full rounded-xl border border-gray-700 bg-gray-800 pl-11 pr-4 py-3.5 text-sm text-white placeholder-gray-500 transition focus:border-[#7296a2] focus:outline-none focus:ring-2 focus:ring-[#7296a2]/20"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username (e.g. admin)"
+                className="w-full rounded-xl border border-gray-700 bg-gray-800 pl-11 pr-5 py-3.5 text-sm text-white placeholder-gray-500 transition focus:border-[#7296a2] focus:outline-none focus:ring-2 focus:ring-[#7296a2]/20"
               />
             </div>
 
-            {/* Password field */}
             <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                <Lock className="h-4 w-4" />
-              </div>
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder="Enter admin password"
+                autoFocus
                 className="w-full rounded-xl border border-gray-700 bg-gray-800 pl-11 pr-12 py-3.5 text-sm text-white placeholder-gray-500 transition focus:border-[#7296a2] focus:outline-none focus:ring-2 focus:ring-[#7296a2]/20"
               />
               <button
@@ -217,23 +246,19 @@ export default function AdminLogin({ onSuccess }) {
 
             <button
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={loading || !password}
               className="w-full rounded-xl bg-gradient-to-r from-[#7296a2] to-[#5a7d88] px-6 py-3.5 text-sm font-medium tracking-[0.15em] text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  SIGNING IN...
+                  VERIFYING...
                 </span>
               ) : (
-                'SIGN IN'
+                'UNLOCK'
               )}
             </button>
           </form>
-
-          <p className="mt-6 text-center text-[11px] text-gray-600">
-            Create admin accounts in Firebase Console → Authentication
-          </p>
         </div>
       </div>
     </div>

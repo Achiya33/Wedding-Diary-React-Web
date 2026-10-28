@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
@@ -10,6 +10,7 @@ import Packages from './pages/Packages.jsx'
 import Contact from './pages/Contact.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Blog from './pages/Blog.jsx'
+import { syncWithBackend } from './utils/contentStore.js'
 
 // Lazy-load admin panel — keeps the public bundle small & fast
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel.jsx'))
@@ -59,6 +60,10 @@ function PublicLayout() {
 }
 
 export default function App() {
+  useEffect(() => {
+    syncWithBackend()
+  }, [])
+
   return (
     <Routes>
       {/* Admin panel — standalone layout, lazy-loaded */}
@@ -71,7 +76,8 @@ export default function App() {
         }
       />
 
-      {/* Alias: /login also opens the admin panel */}
+      {/* Aliases: /admin and /login open the admin panel */}
+      <Route path="/admin" element={<Navigate to="/wd-x9panel" replace />} />
       <Route path="/login" element={<Navigate to="/wd-x9panel" replace />} />
 
       {/* Everything else → public site with Navbar/Footer */}

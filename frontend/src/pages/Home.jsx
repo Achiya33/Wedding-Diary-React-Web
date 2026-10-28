@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import TestimonialCarousel from '../components/TestimonialCarousel.jsx'
-import { useFirebaseContent } from '../utils/useFirebaseContent.js'
+import { getContent } from '../utils/contentStore.js'
 import { useScrollAnimation } from '../utils/useScrollAnimation.js'
 import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
@@ -125,12 +125,12 @@ function ServicesSection({ services }) {
 
         {/* Know More link */}
         <div className={`mt-14 text-center scroll-animate scroll-animate-delay-3 ${visClass}`}>
-          <a
-            href="/contact"
+          <Link
+            to="/contact"
             className="text-[13px] font-semibold uppercase tracking-[0.2em] text-[#7296a2] transition hover:opacity-70"
           >
             Know More
-          </a>
+          </Link>
         </div>
       </div>
     </section>
@@ -163,7 +163,7 @@ function FeaturedAlbumsSection({ items }) {
               className={`group relative block h-[220px] overflow-hidden sm:h-[320px] md:h-[360px] scroll-animate scroll-animate-delay-${Math.min(index + 1, 3)} ${visClass}`}
             >
               <img
-                src={item.coverImage || item.cover}
+                src={asset(item.coverImage || item.cover)}
                 alt={item.title}
                 loading="lazy"
                 className="h-full w-full object-cover transition duration-[1200ms] ease-out group-hover:scale-110"
@@ -215,7 +215,7 @@ function LatestBlogSection({ posts }) {
               {/* Image */}
               <div className="relative overflow-hidden aspect-[4/3]">
                 <img
-                  src={post.image}
+                  src={asset(post.image || post.coverImage)}
                   alt={post.title}
                   loading="lazy"
                   className="h-full w-full object-cover transition duration-[800ms] ease-out group-hover:scale-110"
@@ -282,24 +282,25 @@ function CustomerReviewsSection({ testimonials }) {
 
 export default function Home() {
   usePageTitle('Wedding Diary | Fine Art Wedding Photography', true)
-  const { data: site } = useFirebaseContent('site')
-  const { data: services } = useFirebaseContent('services')
-  const { data: portfolioItems } = useFirebaseContent('portfolio')
-  const { data: testimonials } = useFirebaseContent('testimonials')
-  const { data: blogPosts } = useFirebaseContent('blogs')
-  const { data: heroSlides } = useFirebaseContent('heroSlides')
+  const site = getContent('site')
+  const services = getContent('services')
+  const portfolioItems = getContent('portfolio')
+  const testimonials = getContent('testimonials')
+  const blogPosts = getContent('blogs')
+  const heroSlides = getContent('heroSlides')
 
   const latest = portfolioItems.slice(0, 6)
   const [activeSlide, setActiveSlide] = React.useState(0)
   const [activeService, setActiveService] = React.useState(0)
 
   React.useEffect(() => {
+    if (!heroSlides.length) return
     const interval = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % heroSlides.length)
     }, 4500)
 
     return () => window.clearInterval(interval)
-  }, [])
+  }, [heroSlides.length])
 
   return (
     <div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, Save, ChevronDown, ChevronUp } from 'lucide-react'
-import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
+import { getContent, setContent } from '../utils/contentStore.js'
 import { generateId } from '../utils/imageUtils.js'
+import { asset } from '../utils/assetPath.js'
 import ImageUploader from './ImageUploader.jsx'
-import { sanitizeBlogPost } from '../utils/sanitize.js'
 
 function BlogItemEditor({ post, onChange, onDelete, isOpen, onToggle }) {
   const updateField = (field, value) => {
@@ -17,9 +17,9 @@ function BlogItemEditor({ post, onChange, onDelete, isOpen, onToggle }) {
         className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-gray-800"
       >
         <div className="flex items-center gap-4">
-          {post.image && (
+          {(post.image || post.coverImage) && (
             <img
-              src={post.image}
+              src={asset(post.image || post.coverImage)}
               alt=""
               className="h-12 w-16 rounded-lg object-cover"
               onError={(e) => { e.target.style.display = 'none' }}
@@ -114,30 +114,15 @@ export default function BlogEditor() {
   const [posts, setPosts] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
   const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setPosts(getContent('blogs') || [])
-    const unsub = subscribeToContent('blogs', (data) => {
-      if (data) setPosts(data)
-    })
-    return unsub
   }, [])
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      // Sanitize all blog posts before saving
-      const sanitizedPosts = posts.map(sanitizeBlogPost)
-      await setContent('blogs', sanitizedPosts)
-      setPosts(sanitizedPosts)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch (err) {
-      alert('Failed to save: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
+  const handleSave = () => {
+    setContent('blogs', posts)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   const addPost = () => {

@@ -1,0 +1,64 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: wedding_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-RootPass2026Secure!}
+      MYSQL_DATABASE: wedding_diary
+      MYSQL_USER: ${DB_USER:-wedding_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-WeddingPass2026!}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - wedding_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wedding_backend
+    restart: always
+    environment:
+      PORT: 5000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-wedding_user}
+      DB_PASSWORD: ${DB_PASSWORD:-WeddingPass2026!}
+      DB_NAME: wedding_diary
+      JWT_SECRET: ${JWT_SECRET:-super_secret_wedding_diary_jwt_key_2026}
+      JWT_EXPIRES_IN: 7d
+      CLIENT_URL: ${CLIENT_URL:-http://localhost}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - wedding_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wedding_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - wedding_net
+
+volumes:
+  mysql_data:
+  uploads_data:
+
+networks:
+  wedding_net:
+    driver: bridge

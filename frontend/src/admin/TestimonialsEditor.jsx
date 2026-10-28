@@ -1,39 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, Save } from 'lucide-react'
-import { getContent, setContent, subscribeToContent } from '../utils/contentStore.js'
-import { sanitizeTestimonial } from '../utils/sanitize.js'
+import { getContent, setContent } from '../utils/contentStore.js'
+import ImageUploader from './ImageUploader.jsx'
 
 export default function TestimonialsEditor() {
   const [items, setItems] = useState([])
   const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setItems(getContent('testimonials') || [])
-    const unsub = subscribeToContent('testimonials', (data) => {
-      if (data) setItems(data)
-    })
-    return unsub
   }, [])
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      // Sanitize all testimonials before saving
-      const sanitizedItems = items.map(sanitizeTestimonial)
-      await setContent('testimonials', sanitizedItems)
-      setItems(sanitizedItems)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch (err) {
-      alert('Failed to save: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
+  const handleSave = () => {
+    setContent('testimonials', items)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   const addItem = () => {
-    setItems([...items, { name: '', text: '' }])
+    setItems([...items, { name: '', text: '', image: '' }])
   }
 
   const updateItem = (index, field, value) => {
@@ -53,7 +38,7 @@ export default function TestimonialsEditor() {
         <div>
           <h2 className="text-xl font-semibold text-white">Testimonials</h2>
           <p className="mt-1 text-sm text-gray-400">
-            Manage client testimonials shown on the homepage.
+            Manage client testimonials and review images shown on the homepage.
           </p>
         </div>
         <button
@@ -98,14 +83,21 @@ export default function TestimonialsEditor() {
                   placeholder="e.g. Sara & James"
                 />
               </div>
+
+              <ImageUploader
+                value={item.image || ''}
+                onChange={(val) => updateItem(index, 'image', val)}
+                label="Review Image / Screenshot"
+              />
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Testimonial Text
+                  Testimonial Text (Optional)
                 </label>
                 <textarea
                   value={item.text || ''}
                   onChange={(e) => updateItem(index, 'text', e.target.value)}
-                  rows={3}
+                  rows={2}
                   className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#7296a2] focus:outline-none resize-none"
                   placeholder="What the client said..."
                 />
