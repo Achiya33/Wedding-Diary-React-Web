@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState } from 'react'
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
+import FloatingWhatsApp from './components/FloatingWhatsApp.jsx'
 import Home from './pages/Home.jsx'
 import About from './pages/About.jsx'
 import Portfolio from './pages/Portfolio.jsx'
@@ -55,6 +56,7 @@ function PublicLayout() {
         </Routes>
       </main>
       <Footer />
+      <FloatingWhatsApp />
     </div>
   )
 }

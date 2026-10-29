@@ -3,14 +3,18 @@ import { Send } from 'lucide-react'
 import SectionHeading from '../components/SectionHeading.jsx'
 import TextField from '../components/TextField.jsx'
 import TextArea from '../components/TextArea.jsx'
+import WhatsAppIcon from '../components/WhatsAppIcon.jsx'
 import { submitToFormspree } from '../utils/submit.js'
 import { getContent } from '../utils/contentStore.js'
+import { formatWhatsAppUrl } from '../utils/whatsapp.js'
 import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 
 export default function Contact() {
   usePageTitle('Contact Us')
-  const site = getContent('site')
+  const site = getContent('site') || {}
+  const whatsappNumber = site.whatsapp || site.socials?.whatsapp || site.phone
+  const whatsappUrl = formatWhatsAppUrl(whatsappNumber)
   const [form, setForm] = React.useState({ name: '', email: '', message: '' })
   const [status, setStatus] = React.useState({ state: 'idle', message: '' })
 
@@ -28,6 +32,7 @@ export default function Contact() {
         ...form,
       })
       setStatus({ state: 'success', message: 'Message sent! We will reply soon.' })
+      setForm({ name: '', email: '', message: '' })
       setForm({ name: '', email: '', message: '' })
     } catch (err) {
       setStatus({
@@ -67,6 +72,14 @@ export default function Contact() {
             <ul className="mt-4 text-sm text-ink/80 space-y-2">
               <li><strong>Address:</strong> {site.address}</li>
               <li><strong>Phone:</strong> {site.phone}</li>
+              {whatsappNumber && (
+                <li>
+                  <strong>WhatsApp:</strong>{' '}
+                  <a className="hover:underline" href={whatsappUrl} target="_blank" rel="noreferrer">
+                    {whatsappNumber}
+                  </a>
+                </li>
+              )}
               <li><strong>Email:</strong> {site.email}</li>
             </ul>
           <div className="mt-8 overflow-hidden rounded-xl ring-1 ring-black/10">
@@ -80,12 +93,17 @@ export default function Contact() {
              />
           </div>
             <div className="mt-6 flex flex-wrap gap-2">
-              <a className="btn btn-outline" href={site.socials.facebook} target="_blank" rel="noreferrer">
+              <a className="btn btn-outline" href={site.socials?.facebook} target="_blank" rel="noreferrer">
                 Facebook
               </a>
-              <a className="btn btn-outline" href={site.socials.instagram} target="_blank" rel="noreferrer">
+              <a className="btn btn-outline" href={site.socials?.instagram} target="_blank" rel="noreferrer">
                 Instagram
               </a>
+              {whatsappUrl && (
+                <a className="btn btn-outline inline-flex items-center gap-2 hover:border-[#25D366] hover:text-[#25D366] transition" href={whatsappUrl} target="_blank" rel="noreferrer">
+                  <WhatsAppIcon size={16} /> WhatsApp
+                </a>
+              )}
             </div>
           </div>
         </div>

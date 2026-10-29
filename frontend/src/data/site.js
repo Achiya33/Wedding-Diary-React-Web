@@ -4,10 +4,12 @@ export const site = {
   heroQuote: 'Through light and emotion, we turn moments into timeless stories.',
   email: 'info.wdiary@gmail.com',
   phone: '+94 77 655 5586',
+  whatsapp: '+94 77 655 5586',
   address: '399/B, Waththawa, Mathugama, Srilanka.',
   socials: {
     instagram: 'https://www.instagram.com/w_diarylk/?hl=en',
     facebook: 'https://web.facebook.com/weddingdiarysl/?_rdc=1&_rdr#',
+    whatsapp: '+94 77 655 5586',
   },
 
   formspreeEndpoint: 'https://formspree.io/f/mgonpveb',

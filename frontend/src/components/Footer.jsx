@@ -2,9 +2,13 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react'
 import { getContent } from '../utils/contentStore.js'
+import WhatsAppIcon from './WhatsAppIcon.jsx'
+import { formatWhatsAppUrl } from '../utils/whatsapp.js'
 
 export default function Footer() {
-  const site = getContent('site')
+  const site = getContent('site') || {}
+  const whatsappNumber = site.whatsapp || site.socials?.whatsapp || site.phone
+  const whatsappUrl = formatWhatsAppUrl(whatsappNumber)
   return (
     <footer className="border-t border-black/10 bg-parchment">
       <div className="container-page py-14">
@@ -18,7 +22,7 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
             <div className="mt-5 flex items-center gap-3">
               <a
                 className="btn btn-outline px-3 py-2"
-                href={site.socials.instagram}
+                href={site.socials?.instagram}
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
@@ -27,13 +31,24 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
               </a>
               <a
                 className="btn btn-outline px-3 py-2"
-                href={site.socials.facebook}
+                href={site.socials?.facebook}
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Facebook"
               >
                 <Facebook size={16} />
               </a>
+              {whatsappUrl && (
+                <a
+                  className="btn btn-outline px-3 py-2 hover:text-[#25D366] transition"
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="WhatsApp"
+                >
+                  <WhatsAppIcon size={16} />
+                </a>
+              )}
             </div>
           </div>
 
@@ -46,10 +61,18 @@ With an artistic eye and heartfelt storytelling, every frame reflects your uniqu
               </li>
               <li className="flex items-start gap-2">
                 <Phone size={16} className="mt-0.5" />
-                <a className="hover:underline" href={`tel:${site.phone.replace(/\s/g, '')}`}>
+                <a className="hover:underline" href={`tel:${site.phone?.replace(/\s/g, '')}`}>
                   {site.phone}
                 </a>
               </li>
+              {whatsappNumber && (
+                <li className="flex items-start gap-2">
+                  <WhatsAppIcon size={16} className="mt-0.5" />
+                  <a className="hover:underline" href={whatsappUrl} target="_blank" rel="noreferrer">
+                    {whatsappNumber}
+                  </a>
+                </li>
+              )}
               <li className="flex items-start gap-2">
                 <Mail size={16} className="mt-0.5" />
                 <a className="hover:underline" href={`mailto:${site.email}`}>

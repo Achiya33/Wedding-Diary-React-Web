@@ -9,21 +9,23 @@ import { motion } from 'framer-motion'
 import { asset } from '../utils/assetPath.js'
 import { usePageTitle } from '../utils/usePageTitle.js'
 
+const initialFormState = {
+  groomName: '',
+  brideName: '',
+  email: '',
+  phone: '',
+  plannedDate: '',
+  location: '',
+  shootType: 'Wedding',
+  functionTime: 'Day Time',
+  referral: 'Website',
+  message: '',
+}
+
 export default function Packages() {
   usePageTitle('Packages')
   const site = getContent('site')
-  const [form, setForm] = React.useState({
-    groomName: '',
-    brideName: '',
-    email: '',
-    phone: '',
-    plannedDate: '',
-    location: '',
-    shootType: 'Wedding',
-    functionTime: 'Day Time',
-    referral: 'Website',
-    message: '',
-  })
+  const [form, setForm] = React.useState(initialFormState)
   const [status, setStatus] = React.useState({ state: 'idle', message: '' })
 
   function set(name) {
@@ -40,7 +42,7 @@ export default function Packages() {
         ...form,
       })
       setStatus({ state: 'success', message: 'Submitted! We will contact you soon.' })
-      setForm((f) => ({ ...f, message: '' }))
+      setForm(initialFormState)
     } catch (err) {
       setStatus({
         state: 'error',

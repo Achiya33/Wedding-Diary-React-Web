@@ -105,21 +105,37 @@ export default function SiteSettingsEditor() {
               />
             </div>
           </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp Number</label>
+              <input
+                type="tel"
+                placeholder="+94 77 655 5586"
+                value={settings.whatsapp ?? settings.socials?.whatsapp ?? ''}
+                onChange={(e) => {
+                  updateField('whatsapp', e.target.value)
+                  updateSocial('whatsapp', e.target.value)
+                }}
+                className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
+              />
+              <span className="text-xs text-gray-400 mt-1 block">Used for WhatsApp chat button & direct contact link</span>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Formspree Endpoint</label>
+              <input
+                type="url"
+                value={settings.formspreeEndpoint || ''}
+                onChange={(e) => updateField('formspreeEndpoint', e.target.value)}
+                className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
+              />
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Address</label>
             <input
               type="text"
               value={settings.address || ''}
               onChange={(e) => updateField('address', e.target.value)}
-              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Formspree Endpoint</label>
-            <input
-              type="url"
-              value={settings.formspreeEndpoint || ''}
-              onChange={(e) => updateField('formspreeEndpoint', e.target.value)}
               className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
             />
           </div>
@@ -145,6 +161,20 @@ export default function SiteSettingsEditor() {
               onChange={(e) => updateSocial('facebook', e.target.value)}
               className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp Number / Link</label>
+            <input
+              type="text"
+              placeholder="+94 77 655 5586"
+              value={settings.socials?.whatsapp ?? settings.whatsapp ?? ''}
+              onChange={(e) => {
+                updateField('whatsapp', e.target.value)
+                updateSocial('whatsapp', e.target.value)
+              }}
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2.5 text-sm text-white focus:border-[#7296a2] focus:outline-none"
+            />
+            <span className="text-xs text-gray-400 mt-1 block">Displays WhatsApp button on Footer and Contact page.</span>
           </div>
         </div>
       </div>
